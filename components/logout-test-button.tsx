@@ -25,12 +25,12 @@ export function LogoutTestButton() {
 
   return (
     <button
-      className="block min-h-12 w-full rounded-md bg-red-600 px-5 py-3 text-center text-base font-black text-white shadow-sm hover:bg-red-700 disabled:opacity-70 sm:ml-auto sm:mr-4 sm:mt-4 sm:w-fit"
+      className="block min-h-12 w-full rounded-md bg-era-blue px-5 py-3 text-center text-base font-black text-white shadow-sm hover:bg-era-navy disabled:opacity-70 sm:ml-auto sm:mr-4 sm:mt-4 sm:w-fit"
       type="button"
       disabled={isSigningOut}
       onClick={handleLogout}
     >
-      {isSigningOut ? "LOGGING OUT..." : "LOG OUT TEST"}
+      Log out
     </button>
   );
 }
