@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { ActivityIcon, BellRing, DatabaseZap, FileText, Home, School2, UsersRound } from "lucide-react";
 import { AdminReports } from "@/components/admin-reports";
+import { AdminSummaryStats } from "@/components/admin-summary-stats";
 import { AdminUsersSummary } from "@/components/admin-users-summary";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { RunSyncButton } from "@/components/run-sync-button";
-import { groups, users } from "@/lib/demo-data";
 
 const adminNav = [
   { href: "#home", label: "Home", icon: Home },
@@ -33,12 +33,9 @@ export default function AdminPage() {
       navItems={adminNav}
       mobileNavItems={adminMobileNav}
     >
-      <section className="grid gap-3 sm:gap-4 md:grid-cols-2">
-        <Stat label="Users" value={users.length} />
-        <Stat label="Groups" value={groups.length} />
-      </section>
+      <AdminSummaryStats />
 
-      <AdminUsersSummary users={users} groups={groups} />
+      <AdminUsersSummary />
 
       <section id="groups" className="mt-5 rounded-lg border border-slate-200 bg-white p-4 shadow-soft sm:mt-6 sm:p-5">
         <h2 className="text-xl font-black text-era-navy sm:text-2xl">Groups</h2>
@@ -74,14 +71,5 @@ export default function AdminPage() {
 
       <AdminReports />
     </DashboardShell>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-lg border border-slate-200 border-t-era-orange bg-white p-4 shadow-soft sm:p-5">
-      <p className="text-sm font-bold uppercase text-era-teal">{label}</p>
-      <p className="mt-2 text-3xl font-black text-era-navy">{value}</p>
-    </div>
   );
 }

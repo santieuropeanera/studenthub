@@ -1,30 +1,130 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { Search, UsersRound } from "lucide-react";
-import type { AppUser, Group } from "@/types/studenthub";
 
-export function AdminUsersSummary({ users, groups }: { users: AppUser[]; groups: Group[] }) {
+type ProfileRow = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  role: string | null;
+  group_id: string | null;
+  group_name: string | null;
+};
+
+type GroupRow = {
+  id: string;
+  name: string | null;
+};
+
+type ProfileDetailsRow = {
+  user_id: string | null;
+  group_name: string | null;
+};
+
+type AdminUser = {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  groupName: string;
+};
+
+function createSupabaseBrowserClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Supabase is not configured yet.");
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey);
+}
+
+function normalize(value?: string | null) {
+  return value?.trim() || "";
+}
+
+function indexByUserId(rows: ProfileDetailsRow[] | null) {
+  return (rows ?? []).reduce<Record<string, ProfileDetailsRow>>((lookup, row) => {
+    if (row.user_id) lookup[row.user_id] = row;
+    return lookup;
+  }, {});
+}
+
+export function AdminUsersSummary() {
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [message, setMessage] = useState("Loading users...");
+
+  useEffect(() => {
+    async function loadUsers() {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const [
+          { data: profiles, error: profilesError },
+          { data: studentProfiles, error: studentProfilesError },
+          { data: teacherProfiles, error: teacherProfilesError },
+          { data: groups, error: groupsError }
+        ] = await Promise.all([
+          supabase.from("profiles").select("id, full_name, email, role, group_id, group_name").order("full_name", { ascending: true }),
+          supabase.from("student_profiles").select("user_id, group_name"),
+          supabase.from("teacher_profiles").select("user_id, group_name"),
+          supabase.from("groups").select("id, name")
+        ]);
+
+        if (profilesError) throw profilesError;
+        if (studentProfilesError) throw studentProfilesError;
+        if (teacherProfilesError) throw teacherProfilesError;
+        if (groupsError) throw groupsError;
+
+        const studentByUserId = indexByUserId(studentProfiles);
+        const teacherByUserId = indexByUserId(teacherProfiles);
+        const groupsById = ((groups ?? []) as GroupRow[]).reduce<Record<string, GroupRow>>((lookup, group) => {
+          lookup[group.id] = group;
+          return lookup;
+        }, {});
+
+        setUsers(
+          ((profiles ?? []) as ProfileRow[]).map((profile) => {
+            const fallbackGroup = profile.role === "teacher" ? teacherByUserId[profile.id] : studentByUserId[profile.id];
+            const groupName = normalize(profile.group_name) || normalize(fallbackGroup?.group_name) || normalize(profile.group_id ? groupsById[profile.group_id]?.name : null);
+
+            return {
+              id: profile.id,
+              fullName: normalize(profile.full_name) || "Name not provided",
+              email: normalize(profile.email) || "Email not provided",
+              role: normalize(profile.role) || "unknown",
+              groupName: groupName || "No group"
+            };
+          })
+        );
+        setMessage("");
+      } catch (error) {
+        console.error("[Admin Users] Could not load users", error);
+        setMessage(error instanceof Error ? error.message : "Could not load users.");
+      }
+    }
+
+    void loadUsers();
+  }, []);
 
   const filteredUsers = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
 
     if (!query) return users;
 
-    return users.filter((user) => {
-      const groupName = groups.find((group) => group.id === user.groupId)?.name ?? "All groups";
-      return [user.fullName, user.role, user.email, groupName].join(" ").toLowerCase().includes(query);
-    });
-  }, [groups, searchTerm, users]);
+    return users.filter((user) => [user.fullName, user.role, user.email, user.groupName].join(" ").toLowerCase().includes(query));
+  }, [searchTerm, users]);
 
   return (
     <section id="users" className="mt-5 rounded-lg border border-slate-200 bg-white p-4 shadow-soft sm:mt-6 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-black text-era-navy sm:text-2xl">All Users</h2>
-          <p className="mt-1 text-sm text-slate-600">{users.length} synced users across students, teachers, and admins.</p>
+          <p className="mt-1 text-sm text-slate-600">{message || `${users.length} real users loaded from Supabase.`}</p>
         </div>
         <button
           className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white hover:bg-era-navy sm:w-fit"
@@ -65,12 +165,12 @@ export function AdminUsersSummary({ users, groups }: { users: AppUser[]; groups:
                     <td className="p-3 font-semibold">{user.fullName}</td>
                     <td className="p-3 capitalize">{user.role}</td>
                     <td className="p-3">{user.email}</td>
-                    <td className="p-3">{groups.find((group) => group.id === user.groupId)?.name ?? "All groups"}</td>
+                    <td className="p-3">{user.groupName}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {!filteredUsers.length ? <p className="mt-3 text-sm text-slate-600">No users match your search.</p> : null}
+            {!filteredUsers.length ? <p className="p-3 text-sm text-slate-600">No users match your search.</p> : null}
           </div>
         </div>
       ) : null}
