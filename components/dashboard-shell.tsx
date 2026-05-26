@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ChevronDown, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { DashboardAuthGuard } from "@/components/dashboard-auth-guard";
+import { LogoutButton } from "@/components/logout-button";
 
 type NavItem = {
   href: string;
@@ -15,14 +17,16 @@ type DashboardShellProps = {
   navItems: NavItem[];
   mobileNavItems?: NavItem[];
   headerAction?: ReactNode;
+  mobileMenuAction?: ReactNode;
   children: ReactNode;
 };
 
-export function DashboardShell({ title, subtitle, roleLabel, navItems, mobileNavItems, headerAction, children }: DashboardShellProps) {
+export function DashboardShell({ title, subtitle, roleLabel, navItems, mobileNavItems, headerAction, mobileMenuAction, children }: DashboardShellProps) {
   const menuItems = mobileNavItems ?? navItems;
 
   return (
     <div className="min-h-screen">
+      <DashboardAuthGuard />
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5 lg:px-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -40,6 +44,7 @@ export function DashboardShell({ title, subtitle, roleLabel, navItems, mobileNav
             <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               <span className="w-fit rounded-md border border-era-orange bg-era-sky px-3 py-2 text-sm font-bold text-era-navy">{roleLabel}</span>
               {headerAction}
+              <LogoutButton />
             </div>
           </div>
           <details className="group relative sm:hidden">
@@ -58,6 +63,10 @@ export function DashboardShell({ title, subtitle, roleLabel, navItems, mobileNav
                   {item.label}
                 </Link>
               ))}
+              {mobileMenuAction ? <div className="border-t border-slate-100">{mobileMenuAction}</div> : null}
+              <div className="border-t border-slate-100">
+                <LogoutButton variant="mobile" />
+              </div>
             </nav>
           </details>
           <nav className="hidden gap-2 overflow-x-auto pb-1 sm:flex" aria-label="Dashboard navigation">

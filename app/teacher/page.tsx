@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { BedDouble, BriefcaseBusiness, CalendarDays, ChevronDown, HeartPulse, Home, Phone, PhoneCall, Search, Siren, UserRound, UsersRound, type LucideIcon } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { LogoutButton } from "@/components/logout-button";
+import { LogoutTestButton } from "@/components/logout-test-button";
 import { appConfig } from "@/lib/config";
 
 type TeacherDashboardData = {
@@ -221,21 +223,33 @@ export default function TeacherPage() {
 
   if (isLoading) {
     return (
-      <DashboardShell title="Teacher Dashboard" subtitle="Loading teacher area." roleLabel="Teacher dashboard" navItems={teacherNav}>
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <p className="text-sm font-semibold text-era-navy">Loading teacher dashboard...</p>
-        </section>
-      </DashboardShell>
+      <>
+        <LogoutTestButton />
+        <DashboardShell title="Teacher Dashboard" subtitle="Loading teacher area." roleLabel="Teacher dashboard" navItems={teacherNav} mobileNavItems={teacherMobileNav}>
+          <div className="mb-4 flex justify-end">
+            <LogoutButton />
+          </div>
+          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+            <p className="text-sm font-semibold text-era-navy">Loading teacher dashboard...</p>
+          </section>
+        </DashboardShell>
+      </>
     );
   }
 
   if (!data) {
     return (
-      <DashboardShell title="Teacher Dashboard" subtitle="Your teacher profile will appear here after it is synced from Google Sheets." roleLabel="Teacher dashboard" navItems={teacherNav}>
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <p className="text-sm font-semibold text-era-navy">{message || "No teacher profile found for this account yet."}</p>
-        </section>
-      </DashboardShell>
+      <>
+        <LogoutTestButton />
+        <DashboardShell title="Teacher Dashboard" subtitle="Your teacher profile will appear here after it is synced from Google Sheets." roleLabel="Teacher dashboard" navItems={teacherNav} mobileNavItems={teacherMobileNav}>
+          <div className="mb-4 flex justify-end">
+            <LogoutButton />
+          </div>
+          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+            <p className="text-sm font-semibold text-era-navy">{message || "No teacher profile found for this account yet."}</p>
+          </section>
+        </DashboardShell>
+      </>
     );
   }
 
@@ -251,13 +265,18 @@ export default function TeacherPage() {
   });
 
   return (
-    <DashboardShell
-      title={`Hello, ${data.teacher.fullName}`}
-      subtitle={`You are viewing students and schedule information for ${data.teacher.groupName}.`}
-      roleLabel="Teacher dashboard"
-      navItems={teacherNav}
-      mobileNavItems={teacherMobileNav}
-    >
+    <>
+      <LogoutTestButton />
+      <DashboardShell
+        title={`Hello, ${data.teacher.fullName}`}
+        subtitle={`You are viewing students and schedule information for ${data.teacher.groupName}.`}
+        roleLabel="Teacher dashboard"
+        navItems={teacherNav}
+        mobileNavItems={teacherMobileNav}
+      >
+      <div className="mb-4 flex justify-end">
+        <LogoutButton />
+      </div>
       <section className="grid gap-3 sm:gap-4 md:grid-cols-3">
         <SummaryCard label="Teacher" value={data.teacher.fullName} />
         <SummaryCard label="Email" value={data.teacher.email} />
@@ -359,7 +378,8 @@ export default function TeacherPage() {
           </div>
         </div>
       </section>
-    </DashboardShell>
+      </DashboardShell>
+    </>
   );
 }
 

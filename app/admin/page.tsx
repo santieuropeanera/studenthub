@@ -3,6 +3,8 @@ import { ActivityIcon, BellRing, DatabaseZap, FileText, Home, School2, UsersRoun
 import { AdminReports } from "@/components/admin-reports";
 import { AdminUsersSummary } from "@/components/admin-users-summary";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { LogoutButton } from "@/components/logout-button";
+import { LogoutTestButton } from "@/components/logout-test-button";
 import { RunSyncButton } from "@/components/run-sync-button";
 import { groups, users } from "@/lib/demo-data";
 
@@ -26,13 +28,18 @@ const adminMobileNav = [
 
 export default function AdminPage() {
   return (
-    <DashboardShell
-      title="Admin Operations"
-      subtitle="Manage users, groups, Google Sheets sync, activities, and internal reports."
-      roleLabel="Admin dashboard"
-      navItems={adminNav}
-      mobileNavItems={adminMobileNav}
-    >
+    <>
+      <LogoutTestButton />
+      <DashboardShell
+        title="Admin Operations"
+        subtitle="Manage users, groups, Google Sheets sync, activities, and internal reports."
+        roleLabel="Admin dashboard"
+        navItems={adminNav}
+        mobileNavItems={adminMobileNav}
+      >
+      <div className="mb-4 flex justify-end">
+        <LogoutButton />
+      </div>
       <section className="grid gap-3 sm:gap-4 md:grid-cols-2">
         <Stat label="Users" value={users.length} />
         <Stat label="Groups" value={groups.length} />
@@ -73,7 +80,8 @@ export default function AdminPage() {
       </section>
 
       <AdminReports />
-    </DashboardShell>
+      </DashboardShell>
+    </>
   );
 }
 
