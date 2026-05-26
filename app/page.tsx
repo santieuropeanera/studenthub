@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GraduationCap, UsersRound } from "lucide-react";
+import { HomeAuthRedirect } from "@/components/home-auth-redirect";
 
 const loginCards = [
   {
@@ -57,6 +58,7 @@ const faqs = [
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-era-paper">
+      <HomeAuthRedirect />
       <section className="bg-white">
         <div className="mx-auto grid min-h-[72vh] max-w-7xl gap-8 px-4 py-6 sm:px-6 sm:py-10 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-16">
           <div className="flex flex-col justify-center">
