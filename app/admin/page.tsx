@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ActivityIcon, BellRing, DatabaseZap, FileText, Home, School2, UsersRound } from "lucide-react";
+import { ActivityIcon, BellRing, DatabaseZap, FileText, Home, MailPlus, School2, UsersRound } from "lucide-react";
 import { AdminActiveGroups } from "@/components/admin-active-groups";
 import { AdminReports } from "@/components/admin-reports";
 import { AdminSummaryStats } from "@/components/admin-summary-stats";
+import { AdminUserInvitations } from "@/components/admin-user-invitations";
 import { AdminUsersSummary } from "@/components/admin-users-summary";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { RunSyncButton } from "@/components/run-sync-button";
@@ -10,6 +11,7 @@ import { RunSyncButton } from "@/components/run-sync-button";
 const adminNav = [
   { href: "#home", label: "Home", icon: Home },
   { href: "#users", label: "Users", icon: UsersRound },
+  { href: "#invitations", label: "Invitations", icon: MailPlus },
   { href: "#groups", label: "Active Groups", icon: School2 },
   { href: "#sync", label: "Sheets Sync", icon: DatabaseZap },
   { href: "#activities", label: "Activities", icon: ActivityIcon },
@@ -20,6 +22,7 @@ const adminMobileNav = [
   { href: "/admin", label: "Dashboard", icon: Home },
   { href: "#sync", label: "Sync", icon: DatabaseZap },
   { href: "#users", label: "Users", icon: UsersRound },
+  { href: "#invitations", label: "Invitations", icon: MailPlus },
   { href: "/admin/activities", label: "Activities", icon: ActivityIcon },
   { href: "#reports", label: "Reports", icon: FileText },
   { href: "#notifications", label: "Notifications/Alerts", icon: BellRing }
@@ -37,6 +40,8 @@ export default function AdminPage() {
       <AdminSummaryStats />
 
       <AdminUsersSummary />
+
+      <AdminUserInvitations />
 
       <AdminActiveGroups />
 

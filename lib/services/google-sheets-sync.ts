@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { google } from "googleapis";
 import { z } from "zod";
 import { buildMapsSearchUrl } from "@/lib/config";
@@ -327,6 +326,7 @@ async function upsertPeople(
           full_name: row.full_name,
           email: row.email,
           phone: row.phone ?? null,
+          auth_user_id: userId,
           school_id: schoolId,
           group_id: groupId,
           group_name: row.group_name
@@ -422,7 +422,6 @@ async function findOrCreateAuthUser(supabase: ReturnType<typeof createSupabaseAd
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     email_confirm: true,
-    password: randomUUID(),
     user_metadata: { full_name: fullName }
   });
 
