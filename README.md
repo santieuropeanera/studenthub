@@ -278,3 +278,5 @@ Fix the email address in the sheet.
 - Add admin notification logs UI.
 - Add automated tests for RLS, sync mapping, and notification failures.
 - Add localized date formatting per school or group if needed, while keeping the interface in English.
+
+Deployment trigger
