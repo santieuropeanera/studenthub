@@ -22,8 +22,6 @@ import {
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { InfoCard } from "@/components/info-card";
-import { LogoutButton } from "@/components/logout-button";
-import { LogoutTestButton } from "@/components/logout-test-button";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { appConfig } from "@/lib/config";
 
@@ -640,45 +638,33 @@ export default function StudentPage() {
 
   if (isLoading) {
     return (
-      <>
-        <LogoutTestButton />
-        <DashboardShell
-          title="StudentHub"
-          subtitle="Loading your student dashboard."
-          roleLabel="Student dashboard"
-          navItems={studentNav}
-          mobileNavItems={studentMobileNav}
-        >
-          <div className="mb-4 flex justify-end">
-            <LogoutButton />
-          </div>
-          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-            <p className="text-sm font-semibold text-era-navy">Loading student profile...</p>
-          </section>
-        </DashboardShell>
-      </>
+      <DashboardShell
+        title="StudentHub"
+        subtitle="Loading your student dashboard."
+        roleLabel="Student dashboard"
+        navItems={studentNav}
+        mobileNavItems={studentMobileNav}
+      >
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+          <p className="text-sm font-semibold text-era-navy">Loading student profile...</p>
+        </section>
+      </DashboardShell>
     );
   }
 
   if (!data) {
     return (
-      <>
-        <LogoutTestButton />
-        <DashboardShell
-          title="StudentHub"
-          subtitle="Your student profile will appear here after it is synced from Google Sheets."
-          roleLabel="Student dashboard"
-          navItems={studentNav}
-          mobileNavItems={studentMobileNav}
-        >
-          <div className="mb-4 flex justify-end">
-            <LogoutButton />
-          </div>
-          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-            <p className="text-sm font-semibold text-era-navy">{message || "No student profile found for this account yet."}</p>
-          </section>
-        </DashboardShell>
-      </>
+      <DashboardShell
+        title="StudentHub"
+        subtitle="Your student profile will appear here after it is synced from Google Sheets."
+        roleLabel="Student dashboard"
+        navItems={studentNav}
+        mobileNavItems={studentMobileNav}
+      >
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+          <p className="text-sm font-semibold text-era-navy">{message || "No student profile found for this account yet."}</p>
+        </section>
+      </DashboardShell>
     );
   }
 
@@ -690,30 +676,25 @@ export default function StudentPage() {
     : "";
 
   return (
-    <>
-      <LogoutTestButton />
-      <DashboardShell
-        title={`Welcome, ${user.fullName}`}
-        subtitle=""
-        roleLabel="Student dashboard"
-        navItems={studentNav}
-        mobileNavItems={studentMobileNav}
-        headerAction={
-          <>
-            <button
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-red-600 px-3 py-2 text-sm font-bold text-white hover:bg-red-700 sm:w-auto"
-              type="button"
-              onClick={openEmergencyCard}
-            >
-              <QrCode className="h-4 w-4" aria-hidden="true" />
-              Emergency QR Card
-            </button>
-          </>
-        }
-      >
-      <div className="mb-4 flex justify-end">
-        <LogoutButton />
-      </div>
+    <DashboardShell
+      title={`Welcome, ${user.fullName}`}
+      subtitle=""
+      roleLabel="Student dashboard"
+      navItems={studentNav}
+      mobileNavItems={studentMobileNav}
+      headerAction={
+        <>
+          <button
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-red-600 px-3 py-2 text-sm font-bold text-white hover:bg-red-700 sm:w-auto"
+            type="button"
+            onClick={openEmergencyCard}
+          >
+            <QrCode className="h-4 w-4" aria-hidden="true" />
+            Emergency QR Card
+          </button>
+        </>
+      }
+    >
       <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
         <InfoCard title="Profile / My Information" icon={UserRound} accent="teal">
           <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -976,7 +957,6 @@ export default function StudentPage() {
           </div>
         </div>
       </section>
-      </DashboardShell>
-    </>
+    </DashboardShell>
   );
 }
