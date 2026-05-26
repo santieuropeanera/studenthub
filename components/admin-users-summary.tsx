@@ -1,15 +1,30 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { Search, UsersRound } from "lucide-react";
+import { ChevronDown, Search, UserRound, UsersRound } from "lucide-react";
 
 type ProfileRow = {
   id: string;
   full_name: string | null;
   email: string | null;
+  phone: string | null;
   role: string | null;
   group_id: string | null;
+  group_name: string | null;
+};
+
+type StudentProfileRow = {
+  user_id: string | null;
+  group_name: string | null;
+  phone_number: string | null;
+  profile_photo_url: string | null;
+  internship_placement_id: string | null;
+  accommodation_id: string | null;
+};
+
+type TeacherProfileRow = {
+  user_id: string | null;
   group_name: string | null;
 };
 
@@ -18,9 +33,23 @@ type GroupRow = {
   name: string | null;
 };
 
-type ProfileDetailsRow = {
-  user_id: string | null;
-  group_name: string | null;
+type PlacementRow = {
+  id: string;
+  name: string | null;
+  address: string | null;
+  working_hours: string | null;
+};
+
+type AccommodationRow = {
+  id: string;
+  name: string | null;
+  address: string | null;
+  hospital_medical_center_id: string | null;
+};
+
+type HospitalRow = {
+  id: string;
+  name: string | null;
 };
 
 type AdminUser = {
@@ -29,6 +58,14 @@ type AdminUser = {
   email: string;
   role: string;
   groupName: string;
+  phone: string;
+  profilePhotoUrl: string | null;
+  accommodationName: string;
+  accommodationAddress: string;
+  workPlacementName: string;
+  workPlacementAddress: string;
+  workingHours: string;
+  hospitalName: string;
 };
 
 function createSupabaseBrowserClient() {
@@ -42,12 +79,19 @@ function createSupabaseBrowserClient() {
   return createClient(supabaseUrl, supabaseAnonKey);
 }
 
-function normalize(value?: string | null) {
-  return value?.trim() || "";
+function normalize(value?: string | null, fallback = "") {
+  return value?.trim() || fallback;
 }
 
-function indexByUserId(rows: ProfileDetailsRow[] | null) {
-  return (rows ?? []).reduce<Record<string, ProfileDetailsRow>>((lookup, row) => {
+function indexById<Row extends { id: string }>(rows: Row[] | null) {
+  return (rows ?? []).reduce<Record<string, Row>>((lookup, row) => {
+    lookup[row.id] = row;
+    return lookup;
+  }, {});
+}
+
+function indexByUserId<Row extends { user_id: string | null }>(rows: Row[] | null) {
+  return (rows ?? []).reduce<Record<string, Row>>((lookup, row) => {
     if (row.user_id) lookup[row.user_id] = row;
     return lookup;
   }, {});
@@ -56,6 +100,7 @@ function indexByUserId(rows: ProfileDetailsRow[] | null) {
 export function AdminUsersSummary() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [message, setMessage] = useState("Loading users...");
 
@@ -67,37 +112,60 @@ export function AdminUsersSummary() {
           { data: profiles, error: profilesError },
           { data: studentProfiles, error: studentProfilesError },
           { data: teacherProfiles, error: teacherProfilesError },
-          { data: groups, error: groupsError }
+          { data: groups, error: groupsError },
+          { data: placements, error: placementsError },
+          { data: accommodations, error: accommodationsError },
+          { data: hospitals, error: hospitalsError }
         ] = await Promise.all([
-          supabase.from("profiles").select("id, full_name, email, role, group_id, group_name").order("full_name", { ascending: true }),
-          supabase.from("student_profiles").select("user_id, group_name"),
+          supabase.from("profiles").select("id, full_name, email, phone, role, group_id, group_name").order("full_name", { ascending: true }),
+          supabase.from("student_profiles").select("user_id, group_name, phone_number, profile_photo_url, internship_placement_id, accommodation_id"),
           supabase.from("teacher_profiles").select("user_id, group_name"),
-          supabase.from("groups").select("id, name")
+          supabase.from("groups").select("id, name"),
+          supabase.from("internship_placements").select("id, name, address, working_hours"),
+          supabase.from("accommodations").select("id, name, address, hospital_medical_center_id"),
+          supabase.from("hospital_medical_centers").select("id, name")
         ]);
 
         if (profilesError) throw profilesError;
         if (studentProfilesError) throw studentProfilesError;
         if (teacherProfilesError) throw teacherProfilesError;
         if (groupsError) throw groupsError;
+        if (placementsError) throw placementsError;
+        if (accommodationsError) throw accommodationsError;
+        if (hospitalsError) throw hospitalsError;
 
-        const studentByUserId = indexByUserId(studentProfiles);
-        const teacherByUserId = indexByUserId(teacherProfiles);
-        const groupsById = ((groups ?? []) as GroupRow[]).reduce<Record<string, GroupRow>>((lookup, group) => {
-          lookup[group.id] = group;
-          return lookup;
-        }, {});
+        const studentsByUserId = indexByUserId((studentProfiles ?? []) as StudentProfileRow[]);
+        const teachersByUserId = indexByUserId((teacherProfiles ?? []) as TeacherProfileRow[]);
+        const groupsById = indexById((groups ?? []) as GroupRow[]);
+        const placementsById = indexById((placements ?? []) as PlacementRow[]);
+        const accommodationsById = indexById((accommodations ?? []) as AccommodationRow[]);
+        const hospitalsById = indexById((hospitals ?? []) as HospitalRow[]);
 
         setUsers(
           ((profiles ?? []) as ProfileRow[]).map((profile) => {
-            const fallbackGroup = profile.role === "teacher" ? teacherByUserId[profile.id] : studentByUserId[profile.id];
-            const groupName = normalize(profile.group_name) || normalize(fallbackGroup?.group_name) || normalize(profile.group_id ? groupsById[profile.group_id]?.name : null);
+            const studentProfile = studentsByUserId[profile.id];
+            const teacherProfile = teachersByUserId[profile.id];
+            const placement = studentProfile?.internship_placement_id ? placementsById[studentProfile.internship_placement_id] : null;
+            const accommodation = studentProfile?.accommodation_id ? accommodationsById[studentProfile.accommodation_id] : null;
+            const hospital = accommodation?.hospital_medical_center_id ? hospitalsById[accommodation.hospital_medical_center_id] : null;
+            const detailGroupName = profile.role === "teacher" ? teacherProfile?.group_name : studentProfile?.group_name;
+            const groupName = normalize(profile.group_name) || normalize(detailGroupName) || normalize(profile.group_id ? groupsById[profile.group_id]?.name : null, "No group");
+            const phone = normalize(studentProfile?.phone_number) || normalize(profile.phone, "No phone");
 
             return {
               id: profile.id,
-              fullName: normalize(profile.full_name) || "Name not provided",
-              email: normalize(profile.email) || "Email not provided",
-              role: normalize(profile.role) || "unknown",
-              groupName: groupName || "No group"
+              fullName: normalize(profile.full_name, "Name not provided"),
+              email: normalize(profile.email, "Email not provided"),
+              role: normalize(profile.role, "unknown"),
+              groupName,
+              phone,
+              profilePhotoUrl: studentProfile?.profile_photo_url ?? null,
+              accommodationName: normalize(accommodation?.name, "Not assigned"),
+              accommodationAddress: normalize(accommodation?.address, "Address not available"),
+              workPlacementName: normalize(placement?.name, "Not assigned"),
+              workPlacementAddress: normalize(placement?.address, "Address not available"),
+              workingHours: normalize(placement?.working_hours, "Not provided"),
+              hospitalName: normalize(hospital?.name, "Not assigned")
             };
           })
         );
@@ -116,7 +184,21 @@ export function AdminUsersSummary() {
 
     if (!query) return users;
 
-    return users.filter((user) => [user.fullName, user.role, user.email, user.groupName].join(" ").toLowerCase().includes(query));
+    return users.filter((user) =>
+      [
+        user.fullName,
+        user.groupName,
+        user.workPlacementName,
+        user.phone,
+        user.email,
+        user.role,
+        user.accommodationName,
+        user.hospitalName
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
   }, [searchTerm, users]);
 
   return (
@@ -150,24 +232,48 @@ export function AdminUsersSummary() {
             />
           </label>
           <div className="mt-4 overflow-x-auto rounded-md border border-slate-100">
-            <table className="w-full min-w-[680px] text-left text-sm">
+            <table className="w-full min-w-[780px] text-left text-sm">
               <thead className="bg-era-sky text-era-navy">
                 <tr>
                   <th className="p-3">Name</th>
-                  <th className="p-3">Role</th>
-                  <th className="p-3">Email</th>
                   <th className="p-3">Group</th>
+                  <th className="p-3">Work placement</th>
+                  <th className="p-3">Phone</th>
+                  <th className="p-3">Details</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="border-b border-slate-100">
-                    <td className="p-3 font-semibold">{user.fullName}</td>
-                    <td className="p-3 capitalize">{user.role}</td>
-                    <td className="p-3">{user.email}</td>
-                    <td className="p-3">{user.groupName}</td>
-                  </tr>
-                ))}
+                {filteredUsers.map((user) => {
+                  const isExpanded = expandedUserId === user.id;
+
+                  return (
+                    <Fragment key={user.id}>
+                      <tr className="border-b border-slate-100">
+                        <td className="p-3 font-semibold">{user.fullName}</td>
+                        <td className="p-3">{user.groupName}</td>
+                        <td className="p-3">{user.workPlacementName}</td>
+                        <td className="p-3">{user.phone}</td>
+                        <td className="p-3">
+                          <button
+                            className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-2 text-xs font-bold text-era-navy hover:border-era-orange"
+                            type="button"
+                            onClick={() => setExpandedUserId(isExpanded ? null : user.id)}
+                          >
+                            {isExpanded ? "Hide" : "View"}
+                            <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} aria-hidden="true" />
+                          </button>
+                        </td>
+                      </tr>
+                      {isExpanded ? (
+                        <tr className="border-b border-slate-100 bg-era-paper">
+                          <td className="p-4" colSpan={5}>
+                            <UserDetails user={user} />
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
             {!filteredUsers.length ? <p className="p-3 text-sm text-slate-600">No users match your search.</p> : null}
@@ -175,5 +281,59 @@ export function AdminUsersSummary() {
         </div>
       ) : null}
     </section>
+  );
+}
+
+function UserDetails({ user }: { user: AdminUser }) {
+  if (user.role === "student") {
+    return (
+      <div className="grid gap-4 md:grid-cols-[auto_1fr]">
+        {user.profilePhotoUrl ? (
+          <img className="h-24 w-24 rounded-lg border border-slate-200 object-cover" src={user.profilePhotoUrl} alt={`${user.fullName} profile photo`} />
+        ) : (
+          <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-slate-200 bg-white text-era-navy">
+            <UserRound className="h-10 w-10" aria-hidden="true" />
+          </div>
+        )}
+        <dl className="grid gap-3 text-sm md:grid-cols-2">
+          <Detail label="Email" value={user.email} />
+          <Detail label="Role" value={user.role} />
+          <Detail label="Accommodation" value={user.accommodationName} />
+          <Detail label="Accommodation address" value={user.accommodationAddress} />
+          <Detail label="Work placement" value={user.workPlacementName} />
+          <Detail label="Work placement address" value={user.workPlacementAddress} />
+          <Detail label="Working hours" value={user.workingHours} />
+          <Detail label="Assigned hospital" value={user.hospitalName} />
+          <Detail label="Phone" value={user.phone} />
+        </dl>
+      </div>
+    );
+  }
+
+  if (user.role === "teacher") {
+    return (
+      <dl className="grid gap-3 text-sm md:grid-cols-2">
+        <Detail label="Email" value={user.email} />
+        <Detail label="Role" value={user.role} />
+        <Detail label="Group" value={user.groupName} />
+        <Detail label="Phone" value={user.phone} />
+      </dl>
+    );
+  }
+
+  return (
+    <dl className="grid gap-3 text-sm md:grid-cols-2">
+      <Detail label="Email" value={user.email} />
+      <Detail label="Role" value={user.role} />
+    </dl>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-white p-3">
+      <dt className="font-bold text-era-navy">{label}</dt>
+      <dd className="mt-1 text-slate-700">{value}</dd>
+    </div>
   );
 }
