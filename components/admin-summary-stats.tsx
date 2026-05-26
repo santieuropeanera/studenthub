@@ -7,10 +7,6 @@ type ProfileRow = {
   group_name: string | null;
 };
 
-type GroupRow = {
-  name: string | null;
-};
-
 function createSupabaseBrowserClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -30,26 +26,32 @@ export function AdminSummaryStats() {
     async function loadStats() {
       try {
         const supabase = createSupabaseBrowserClient();
-        const [{ count, error: countError }, { data: profiles, error: profilesError }, { data: groups, error: groupsError }] = await Promise.all([
+        const [
+          { count, error: countError },
+          { data: profiles, error: profilesError },
+          { data: studentProfiles, error: studentProfilesError },
+          { data: teacherProfiles, error: teacherProfilesError },
+          { data: scheduleItems, error: scheduleItemsError }
+        ] = await Promise.all([
           supabase.from("profiles").select("id", { count: "exact", head: true }),
           supabase.from("profiles").select("group_name"),
-          supabase.from("groups").select("name")
+          supabase.from("student_profiles").select("group_name"),
+          supabase.from("teacher_profiles").select("group_name"),
+          supabase.from("schedule_items").select("group_name")
         ]);
 
         if (countError) throw countError;
         if (profilesError) throw profilesError;
-        if (groupsError) throw groupsError;
+        if (studentProfilesError) throw studentProfilesError;
+        if (teacherProfilesError) throw teacherProfilesError;
+        if (scheduleItemsError) throw scheduleItemsError;
 
         const groupNames = new Set<string>();
-
-        ((profiles ?? []) as ProfileRow[]).forEach((profile) => {
-          const name = profile.group_name?.trim();
-          if (name) groupNames.add(name.toLowerCase());
-        });
-
-        ((groups ?? []) as GroupRow[]).forEach((group) => {
-          const name = group.name?.trim();
-          if (name) groupNames.add(name.toLowerCase());
+        [profiles, studentProfiles, teacherProfiles, scheduleItems].forEach((rows) => {
+          ((rows ?? []) as ProfileRow[]).forEach((row) => {
+            const name = row.group_name?.trim();
+            if (name) groupNames.add(name.toLowerCase());
+          });
         });
 
         setUsersCount(count ?? 0);
@@ -67,7 +69,7 @@ export function AdminSummaryStats() {
   return (
     <section className="grid gap-3 sm:gap-4 md:grid-cols-2">
       <Stat label="Users" value={usersCount} />
-      <Stat label="Groups" value={groupsCount} />
+      <Stat label="Active Groups" value={groupsCount} />
     </section>
   );
 }

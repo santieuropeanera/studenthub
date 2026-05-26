@@ -6,7 +6,7 @@ import { DashboardShell } from "@/components/dashboard-shell";
 const adminNav = [
   { href: "/admin", label: "Home", icon: Home },
   { href: "/admin#users", label: "Users", icon: UsersRound },
-  { href: "/admin#groups", label: "Groups", icon: School2 },
+  { href: "/admin#groups", label: "Active Groups", icon: School2 },
   { href: "/admin#sync", label: "Sheets Sync", icon: DatabaseZap },
   { href: "/admin/activities", label: "Activities", icon: ActivityIcon },
   { href: "/admin#reports", label: "Reports", icon: FileText }

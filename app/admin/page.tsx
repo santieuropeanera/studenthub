@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ActivityIcon, BellRing, DatabaseZap, FileText, Home, School2, UsersRound } from "lucide-react";
+import { AdminActiveGroups } from "@/components/admin-active-groups";
 import { AdminReports } from "@/components/admin-reports";
 import { AdminSummaryStats } from "@/components/admin-summary-stats";
 import { AdminUsersSummary } from "@/components/admin-users-summary";
@@ -9,7 +10,7 @@ import { RunSyncButton } from "@/components/run-sync-button";
 const adminNav = [
   { href: "#home", label: "Home", icon: Home },
   { href: "#users", label: "Users", icon: UsersRound },
-  { href: "#groups", label: "Groups", icon: School2 },
+  { href: "#groups", label: "Active Groups", icon: School2 },
   { href: "#sync", label: "Sheets Sync", icon: DatabaseZap },
   { href: "#activities", label: "Activities", icon: ActivityIcon },
   { href: "#reports", label: "Reports", icon: FileText }
@@ -37,12 +38,7 @@ export default function AdminPage() {
 
       <AdminUsersSummary />
 
-      <section id="groups" className="mt-5 rounded-lg border border-slate-200 bg-white p-4 shadow-soft sm:mt-6 sm:p-5">
-        <h2 className="text-xl font-black text-era-navy sm:text-2xl">Groups</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          StudentHub treats schools and groups as the same operational grouping for now. Group data is synced from Google Sheets.
-        </p>
-      </section>
+      <AdminActiveGroups />
 
       <section id="sync" className="mt-5 rounded-lg border border-slate-200 bg-white p-4 shadow-soft sm:mt-6 sm:p-5">
         <h2 className="text-xl font-black text-era-navy sm:text-2xl">Google Sheets Sync</h2>
