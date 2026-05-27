@@ -91,11 +91,6 @@ export default function StudentActivitiesPage() {
           .eq("is_active", true)
           .order("created_at", { ascending: false });
         if (error) throw error;
-        console.log("[Student Activities] Loaded activities image_url values:", (data ?? []).map((activity) => ({
-          title: activity.title,
-          image_url: activity.image_url
-        })));
-
         setActivities(
           (data ?? []).map((activity) => ({
             id: activity.id,
@@ -149,9 +144,6 @@ export default function StudentActivitiesPage() {
               <div className="flex h-32 items-center justify-center bg-era-sky text-sm font-bold text-era-navy">Image not available</div>
             )}
             <div className="p-4 sm:p-5">
-              <p className="mb-3 break-all rounded-md bg-era-paper p-2 text-xs font-semibold text-slate-600">
-                image_url: {activity.imageUrl || "empty"}
-              </p>
               {activity.category ? <span className="rounded-md bg-era-orange px-2 py-1 text-xs font-black uppercase text-era-ink">{activity.category}</span> : null}
               <h2 className="mt-3 text-xl font-black text-era-navy">{activity.title}</h2>
               {activity.description ? <p className="mt-3 text-sm leading-6 text-slate-600">{activity.description}</p> : null}
