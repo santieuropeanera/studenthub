@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LockKeyhole } from "lucide-react";
@@ -119,14 +118,6 @@ export default function LoginPage() {
             {isLoading ? "Signing in..." : "Sign in with Supabase"}
           </button>
         </form>
-        <p className="mt-4 text-sm text-slate-600">
-          This form uses Supabase Auth after your project keys and profile rows are configured.
-        </p>
-        <div className="mt-5 grid gap-2 text-sm">
-          <Link className="font-bold text-era-blue" href="/student">Open student demo</Link>
-          <Link className="font-bold text-era-blue" href="/teacher">Open teacher demo</Link>
-          <Link className="font-bold text-era-blue" href="/admin">Open admin demo</Link>
-        </div>
       </section>
     </main>
   );
