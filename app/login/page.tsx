@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { LockKeyhole } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -110,11 +109,7 @@ export default function LoginPage() {
               required
             />
           </label>
-          <div className="-mt-2 text-right">
-            <Link className="text-sm font-bold text-era-blue hover:text-era-navy" href="/auth/forgot-password">
-              Forgot password?
-            </Link>
-          </div>
+          <p className="-mt-2 text-sm text-slate-600">If you need help accessing your account, contact European Era.</p>
           <button
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-era-blue px-4 py-3 font-black text-white"
             type="submit"
