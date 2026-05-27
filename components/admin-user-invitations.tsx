@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { MailPlus, RefreshCw, Send } from "lucide-react";
+import { LoadingButtonContent } from "@/components/loading-states";
 
 type InvitationUser = {
   id: string;
@@ -153,8 +154,12 @@ export function AdminUserInvitations() {
           onClick={sendNewInvites}
           disabled={isSending || isLoading || pendingUsers.length === 0}
         >
-          <Send className="h-4 w-4" aria-hidden="true" />
-          {isSending ? "Sending..." : "Send invites to new users"}
+          {isSending ? <LoadingButtonContent label="Sending..." /> : (
+            <>
+              <Send className="h-4 w-4" aria-hidden="true" />
+              Send invites to new users
+            </>
+          )}
         </button>
       </div>
 
@@ -223,8 +228,12 @@ function InvitationList({
                 onClick={() => onResend(user.id)}
                 disabled={resendingId === user.id || !user.email}
               >
-                <RefreshCw className={`h-4 w-4 ${resendingId === user.id ? "animate-spin" : ""}`} aria-hidden="true" />
-                {actionLabel}
+                {resendingId === user.id ? <LoadingButtonContent label="Sending..." /> : (
+                  <>
+                    <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                    {actionLabel}
+                  </>
+                )}
               </button>
             </div>
           ))

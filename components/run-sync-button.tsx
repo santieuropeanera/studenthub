@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
+import { LoadingButtonContent } from "@/components/loading-states";
 
 type SyncResult = {
   importedRows: number;
@@ -49,8 +50,12 @@ export function RunSyncButton() {
         onClick={runSync}
         disabled={isSyncing}
       >
-        <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
-        {isSyncing ? "Running sync..." : "Run Sync"}
+        {isSyncing ? <LoadingButtonContent label="Running sync..." /> : (
+          <>
+            <RefreshCw className="h-4 w-4" />
+            Run Sync
+          </>
+        )}
       </button>
       {message ? <p className="mt-3 text-sm font-semibold text-era-navy">{message}</p> : null}
       {errors.length ? (

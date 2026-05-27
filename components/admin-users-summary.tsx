@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { ChevronDown, Search, UserRound, UsersRound } from "lucide-react";
+import { LoadingCardSkeleton } from "@/components/loading-states";
 
 type ProfileRow = {
   id: string;
@@ -103,6 +104,7 @@ export function AdminUsersSummary() {
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [message, setMessage] = useState("Loading users...");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadUsers() {
@@ -173,6 +175,8 @@ export function AdminUsersSummary() {
       } catch (error) {
         console.error("[Admin Users] Could not load users", error);
         setMessage(error instanceof Error ? error.message : "Could not load users.");
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -220,6 +224,12 @@ export function AdminUsersSummary() {
 
       {isOpen ? (
         <div className="mt-4">
+          {isLoading ? (
+            <div className="mb-4 grid gap-3 md:grid-cols-2">
+              <LoadingCardSkeleton rows={3} />
+              <LoadingCardSkeleton rows={3} />
+            </div>
+          ) : null}
           <label className="relative block max-w-sm">
             <span className="sr-only">Search users</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
@@ -231,7 +241,7 @@ export function AdminUsersSummary() {
               onChange={(event) => setSearchTerm(event.target.value)}
             />
           </label>
-          <div className="mt-4 overflow-x-auto rounded-md border border-slate-100">
+          {!isLoading ? <div className="mt-4 overflow-x-auto rounded-md border border-slate-100">
             <table className="w-full min-w-[780px] text-left text-sm">
               <thead className="bg-era-sky text-era-navy">
                 <tr>
@@ -277,7 +287,7 @@ export function AdminUsersSummary() {
               </tbody>
             </table>
             {!filteredUsers.length ? <p className="p-3 text-sm text-slate-600">No users match your search.</p> : null}
-          </div>
+          </div> : null}
         </div>
       ) : null}
     </section>

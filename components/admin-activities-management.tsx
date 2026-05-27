@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Pencil, Power, Save, Trash2, X } from "lucide-react";
+import { LoadingButtonContent, LoadingCardSkeleton } from "@/components/loading-states";
 
 type ActivityRow = {
   id: string;
@@ -221,14 +222,17 @@ export function AdminActivitiesManagement() {
         <h3 className="font-black text-era-navy">Create activity</h3>
         <ActivityFields values={newActivity} onChange={updateNew} />
         <button className="min-h-11 w-full rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white disabled:opacity-70 sm:w-fit" type="submit" disabled={isSaving}>
-          {isSaving ? "Saving..." : "Create activity"}
+          {isSaving ? <LoadingButtonContent label="Saving..." /> : "Create activity"}
         </button>
       </form>
 
       {status ? <p className="text-sm font-semibold text-era-navy">{status}</p> : null}
 
       {isLoading ? (
-        <p className="rounded-md bg-era-paper p-4 text-sm font-semibold text-era-navy">Loading activities...</p>
+        <div className="grid gap-3">
+          <LoadingCardSkeleton rows={3} />
+          <LoadingCardSkeleton rows={3} />
+        </div>
       ) : activities.length ? (
         <div className="grid gap-3">
           {activities.map((activity) => {
@@ -241,7 +245,7 @@ export function AdminActivitiesManagement() {
                     <ActivityFields values={editValues} onChange={updateEdit} />
                     <div className="grid gap-2 sm:flex sm:flex-wrap">
                       <button className="inline-flex min-h-10 items-center justify-center gap-1 rounded-md bg-era-blue px-3 py-2 text-xs font-bold text-white" type="button" onClick={() => saveActivity(activity.id)} disabled={isSaving}>
-                        <Save className="h-3.5 w-3.5" /> Save
+                        {isSaving ? <LoadingButtonContent label="Saving..." /> : <><Save className="h-3.5 w-3.5" /> Save</>}
                       </button>
                       <button className="inline-flex min-h-10 items-center justify-center gap-1 rounded-md border border-slate-300 px-3 py-2 text-xs font-bold text-era-navy" type="button" onClick={() => { setEditingId(null); setEditValues(null); }} disabled={isSaving}>
                         <X className="h-3.5 w-3.5" /> Cancel

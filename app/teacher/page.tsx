@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { BedDouble, BriefcaseBusiness, CalendarDays, ChevronDown, HeartPulse, Home, Phone, PhoneCall, Search, Siren, UserRound, UsersRound, type LucideIcon } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { LoadingDashboardSkeleton } from "@/components/loading-states";
 import { appConfig } from "@/lib/config";
 
 type TeacherDashboardData = {
@@ -222,9 +223,7 @@ export default function TeacherPage() {
   if (isLoading) {
     return (
       <DashboardShell title="Teacher Dashboard" subtitle="Loading teacher area." roleLabel="Teacher dashboard" navItems={teacherNav} mobileNavItems={teacherMobileNav}>
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <p className="text-sm font-semibold text-era-navy">Loading teacher dashboard...</p>
-        </section>
+        <LoadingDashboardSkeleton cards={5} />
       </DashboardShell>
     );
   }

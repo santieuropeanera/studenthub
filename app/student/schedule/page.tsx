@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { ArrowLeft, BedDouble, BriefcaseBusiness, CalendarDays, HeartPulse, Home, ImageIcon, QrCode, Siren } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { LoadingCardSkeleton } from "@/components/loading-states";
 
 type ScheduleItem = {
   id: string;
@@ -131,14 +132,19 @@ export default function StudentSchedulePage() {
         Back to dashboard
       </Link>
       <section className="grid gap-3 md:grid-cols-2">
-        {items.length ? items.map((item) => (
+        {isLoading ? (
+          <>
+            <LoadingCardSkeleton rows={3} />
+            <LoadingCardSkeleton rows={3} />
+          </>
+        ) : items.length ? items.map((item) => (
           <article key={item.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft sm:p-5">
             <h2 className="font-black text-era-navy">{item.title}</h2>
             <p className="mt-3 text-sm font-semibold">{item.date} - {item.time}</p>
             {item.notes ? <p className="mt-2 text-sm text-slate-600">{item.notes}</p> : null}
           </article>
         )) : (
-          <p className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-soft">{isLoading ? message : "No schedule items yet."}</p>
+          <p className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-soft">{message || "No schedule items yet."}</p>
         )}
       </section>
     </DashboardShell>

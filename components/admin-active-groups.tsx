@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { LoadingSpinner } from "@/components/loading-states";
 
 type GroupNameRow = {
   group_name: string | null;
@@ -28,6 +29,7 @@ function addGroupNames(groupNames: Map<string, string>, rows: GroupNameRow[] | n
 export function AdminActiveGroups() {
   const [groups, setGroups] = useState<string[]>([]);
   const [message, setMessage] = useState("Loading active groups...");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadGroups() {
@@ -61,6 +63,8 @@ export function AdminActiveGroups() {
       } catch (error) {
         console.error("[Admin Active Groups] Could not load active groups", error);
         setMessage(error instanceof Error ? error.message : "Could not load active groups.");
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -73,7 +77,7 @@ export function AdminActiveGroups() {
         <div>
           <h2 className="text-xl font-black text-era-navy sm:text-2xl">Active Groups</h2>
           <p className="mt-2 text-sm text-slate-600">
-            {message || `${groups.length} active ${groups.length === 1 ? "group" : "groups"} found.`}
+            {isLoading ? <LoadingSpinner label="Loading active groups..." /> : message || `${groups.length} active ${groups.length === 1 ? "group" : "groups"} found.`}
           </p>
         </div>
       </div>

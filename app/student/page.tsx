@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { InfoCard } from "@/components/info-card";
+import { LoadingButtonContent, LoadingDashboardSkeleton } from "@/components/loading-states";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { appConfig } from "@/lib/config";
 
@@ -652,9 +653,7 @@ export default function StudentPage() {
         navItems={studentNav}
         mobileNavItems={studentMobileNav}
       >
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <p className="text-sm font-semibold text-era-navy">Loading student profile...</p>
-        </section>
+        <LoadingDashboardSkeleton />
       </DashboardShell>
     );
   }
@@ -719,7 +718,7 @@ export default function StudentPage() {
             <div>
               <label className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white hover:bg-era-navy sm:w-auto">
                 <Upload className="h-4 w-4" aria-hidden="true" />
-                {isUploadingPhoto ? "Uploading..." : "Upload photo"}
+                {isUploadingPhoto ? <LoadingButtonContent label="Uploading..." /> : "Upload photo"}
                 <input
                   className="sr-only"
                   type="file"
@@ -758,7 +757,7 @@ export default function StudentPage() {
               {isEditingPhone ? (
                 <>
                   <button className="min-h-11 rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white disabled:opacity-70" type="button" onClick={savePhoneNumber} disabled={isSavingPhone}>
-                    {isSavingPhone ? "Saving..." : "Save"}
+                    {isSavingPhone ? <LoadingButtonContent label="Saving..." /> : "Save"}
                   </button>
                   <button className="min-h-11 rounded-md border border-slate-300 px-4 py-2 text-sm font-bold text-era-navy" type="button" onClick={cancelEditingPhone} disabled={isSavingPhone}>
                     Cancel

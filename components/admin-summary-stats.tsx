@@ -78,7 +78,11 @@ function Stat({ label, value }: { label: string; value: number | null }) {
   return (
     <div className="rounded-lg border border-slate-200 border-t-era-orange bg-white p-4 shadow-soft sm:p-5">
       <p className="text-sm font-bold uppercase text-era-teal">{label}</p>
-      <p className="mt-2 text-3xl font-black text-era-navy">{value ?? "..."}</p>
+      {value === null ? (
+        <div className="mt-3 h-8 w-16 animate-pulse rounded bg-era-sky" aria-hidden="true" />
+      ) : (
+        <p className="mt-2 text-3xl font-black text-era-navy">{value}</p>
+      )}
     </div>
   );
 }

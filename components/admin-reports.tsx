@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { LoadingButtonContent, LoadingCardSkeleton, LoadingSpinner } from "@/components/loading-states";
 
 type ReportRow = {
   id: string;
@@ -168,14 +169,19 @@ export function AdminReports() {
           disabled={isSaving}
           onClick={handleCreateReport}
         >
-          {isSaving ? "Saving..." : "Save report"}
+          {isSaving ? <LoadingButtonContent label="Saving..." /> : "Save report"}
         </button>
         {message ? <p className="text-sm font-semibold text-era-navy">{message}</p> : null}
       </div>
 
       <div className="mt-6 grid gap-3">
         <h3 className="font-black text-era-navy">Report history</h3>
-        {isLoading ? <p className="text-sm text-slate-600">Loading reports...</p> : null}
+        {isLoading ? (
+          <>
+            <LoadingSpinner label="Loading reports..." />
+            <LoadingCardSkeleton rows={2} />
+          </>
+        ) : null}
         {!isLoading && !reports.length ? <p className="text-sm text-slate-600">No reports yet.</p> : null}
         {reports.map((report) => {
           const author = report.author_id ? authors[report.author_id] : null;

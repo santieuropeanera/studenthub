@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { ArrowLeft, BedDouble, BriefcaseBusiness, CalendarDays, HeartPulse, Home, ImageIcon, QrCode, Siren } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { LoadingCardSkeleton } from "@/components/loading-states";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 
 type ActivityItem = {
@@ -51,6 +52,7 @@ const studentMobileNav = [
 export default function StudentActivitiesPage() {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const [studentName, setStudentName] = useState("Student");
   const [message, setMessage] = useState("Loading activities...");
   const [isLoading, setIsLoading] = useState(true);
@@ -131,15 +133,24 @@ export default function StudentActivitiesPage() {
         Please reserve all activities at least 48 hours in advance.
       </div>
       <section className="grid gap-4 md:grid-cols-2">
-        {activities.length ? activities.map((activity) => (
+        {isLoading ? (
+          <>
+            <LoadingCardSkeleton rows={4} />
+            <LoadingCardSkeleton rows={4} />
+          </>
+        ) : activities.length ? activities.map((activity) => (
           <article key={activity.id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
             {activity.imageUrl && !failedImages[activity.id] ? (
-              <img
-                className="h-44 w-full object-cover sm:h-52"
-                src={activity.imageUrl}
-                alt={activity.title}
-                onError={() => setFailedImages((current) => ({ ...current, [activity.id]: true }))}
-              />
+              <div className="relative h-44 bg-era-sky sm:h-52">
+                {!loadedImages[activity.id] ? <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-era-sky via-white to-era-sky" aria-hidden="true" /> : null}
+                <img
+                  className={`h-full w-full object-cover transition-opacity duration-300 ${loadedImages[activity.id] ? "opacity-100" : "opacity-0"}`}
+                  src={activity.imageUrl}
+                  alt={activity.title}
+                  onLoad={() => setLoadedImages((current) => ({ ...current, [activity.id]: true }))}
+                  onError={() => setFailedImages((current) => ({ ...current, [activity.id]: true }))}
+                />
+              </div>
             ) : (
               <div className="flex h-32 items-center justify-center bg-era-sky text-sm font-bold text-era-navy">Image not available</div>
             )}
@@ -161,7 +172,7 @@ export default function StudentActivitiesPage() {
             </div>
           </article>
         )) : (
-          <p className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-soft">{isLoading ? message : "No activities found yet."}</p>
+          <p className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-soft">{message || "No activities found yet."}</p>
         )}
       </section>
     </DashboardShell>
