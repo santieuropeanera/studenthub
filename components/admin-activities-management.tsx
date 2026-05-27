@@ -118,13 +118,13 @@ export function AdminActivitiesManagement() {
 
   function payloadFrom(values: ActivityEdit) {
     return {
-      title: values.title,
-      description: values.description || null,
+      title: values.title.trim(),
+      description: values.description.trim() || null,
       category: values.category,
       minimum_participants: parseMinimumParticipants(values.minimum_participants),
-      age_requirement: values.age_requirement || null,
-      image_url: values.image_url || null,
-      whatsapp_booking_url: values.whatsapp_booking_url || null,
+      age_requirement: values.age_requirement.trim() || null,
+      image_url: values.image_url.trim() || null,
+      whatsapp_booking_url: values.whatsapp_booking_url.trim() || null,
       is_active: values.is_active
     };
   }

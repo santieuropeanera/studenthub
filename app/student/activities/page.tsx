@@ -50,6 +50,7 @@ const studentMobileNav = [
 
 export default function StudentActivitiesPage() {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
   const [studentName, setStudentName] = useState("Student");
   const [message, setMessage] = useState("Loading activities...");
   const [isLoading, setIsLoading] = useState(true);
@@ -90,6 +91,10 @@ export default function StudentActivitiesPage() {
           .eq("is_active", true)
           .order("created_at", { ascending: false });
         if (error) throw error;
+        console.log("[Student Activities] Loaded activities image_url values:", (data ?? []).map((activity) => ({
+          title: activity.title,
+          image_url: activity.image_url
+        })));
 
         setActivities(
           (data ?? []).map((activity) => ({
@@ -99,7 +104,7 @@ export default function StudentActivitiesPage() {
             category: activity.category,
             minimumParticipants: activity.minimum_participants,
             ageRequirement: activity.age_requirement,
-            imageUrl: activity.image_url,
+            imageUrl: activity.image_url?.trim() || null,
             whatsappBookingUrl: activity.whatsapp_booking_url
           }))
         );
@@ -133,12 +138,20 @@ export default function StudentActivitiesPage() {
       <section className="grid gap-4 md:grid-cols-2">
         {activities.length ? activities.map((activity) => (
           <article key={activity.id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
-            {activity.imageUrl ? (
-              <div className="h-44 bg-cover bg-center sm:h-52" style={{ backgroundImage: `url(${activity.imageUrl})` }} />
+            {activity.imageUrl && !failedImages[activity.id] ? (
+              <img
+                className="h-44 w-full object-cover sm:h-52"
+                src={activity.imageUrl}
+                alt={activity.title}
+                onError={() => setFailedImages((current) => ({ ...current, [activity.id]: true }))}
+              />
             ) : (
-              <div className="flex h-32 items-center justify-center bg-era-sky text-sm font-bold text-era-navy">European Era Experience</div>
+              <div className="flex h-32 items-center justify-center bg-era-sky text-sm font-bold text-era-navy">Image not available</div>
             )}
             <div className="p-4 sm:p-5">
+              <p className="mb-3 break-all rounded-md bg-era-paper p-2 text-xs font-semibold text-slate-600">
+                image_url: {activity.imageUrl || "empty"}
+              </p>
               {activity.category ? <span className="rounded-md bg-era-orange px-2 py-1 text-xs font-black uppercase text-era-ink">{activity.category}</span> : null}
               <h2 className="mt-3 text-xl font-black text-era-navy">{activity.title}</h2>
               {activity.description ? <p className="mt-3 text-sm leading-6 text-slate-600">{activity.description}</p> : null}
