@@ -61,7 +61,7 @@ export default function SetPasswordPage() {
           <p className="text-sm font-bold uppercase text-era-blue">European Era StudentHub</p>
           <h1 className="mt-2 text-2xl font-black text-era-navy">Create your password</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Use the secure invitation link from your email to set your StudentHub password.
+            Use the secure link from your email to create or reset your StudentHub password.
           </p>
 
           <form className="mt-5 grid gap-4" onSubmit={handleSubmit}>
