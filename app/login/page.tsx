@@ -39,7 +39,7 @@ export default function LoginPage() {
     const normalizedEmail = signInData.user?.email?.trim().toLowerCase() ?? email.trim().toLowerCase();
     const { data: profileRows, error: profileError } = await supabase
       .from("profiles")
-      .select("role, email")
+      .select("role, email, onboarding_completed")
       .ilike("email", normalizedEmail)
       .limit(1);
 
@@ -57,7 +57,7 @@ export default function LoginPage() {
       return;
     }
 
-    if (profile.role === "student") router.push("/student");
+    if (profile.role === "student") router.push(profile.onboarding_completed ? "/student" : "/student/onboarding");
     else if (profile.role === "teacher") router.push("/teacher");
     else if (profile.role === "admin") router.push("/admin");
     else {

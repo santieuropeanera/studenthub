@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import {
   BedDouble,
@@ -277,6 +278,7 @@ async function loadHospitalForAccommodation(supabase: SupabaseBrowserClient, acc
 }
 
 export default function StudentPage() {
+  const router = useRouter();
   const [data, setData] = useState<StudentDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
@@ -324,7 +326,7 @@ export default function StudentPage() {
 
       const { data: profileRows, error: profileError } = await supabase
         .from("profiles")
-        .select("id, full_name, email, phone, role, school_id, group_id")
+        .select("id, full_name, email, phone, role, school_id, group_id, onboarding_completed")
         .ilike("email", normalizedEmail)
         .eq("role", "student")
         .limit(1);
@@ -339,6 +341,11 @@ export default function StudentPage() {
 
       if (!profile) {
         setMessage("No student profile found for this account yet.");
+        return;
+      }
+
+      if (profile.onboarding_completed === false) {
+        router.replace("/student/onboarding");
         return;
       }
 
@@ -765,6 +772,9 @@ export default function StudentPage() {
             </div>
             {phoneMessage ? <p className="text-sm font-semibold text-era-navy">{phoneMessage}</p> : null}
           </div>
+          <Link className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md border border-era-blue px-4 py-2 text-sm font-bold text-era-blue hover:bg-era-paper sm:w-auto" href="/student/onboarding?review=1">
+            View onboarding again
+          </Link>
         </InfoCard>
 
         <InfoCard id="internship" title="Internship Placement" icon={BriefcaseBusiness} accent="blue">
