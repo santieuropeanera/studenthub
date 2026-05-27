@@ -29,10 +29,23 @@ export default function ForgotPasswordPage() {
 
     setIsSending(true);
 
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://studenthub-jade.vercel.app").replace(/\/$/, "");
-    await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${appUrl}/auth/set-password`
+    const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const appUrl = (configuredAppUrl ?? "https://studenthub-jade.vercel.app").replace(/\/$/, "");
+    const redirectTo = `${appUrl}/auth/set-password`;
+
+    console.log("[Forgot Password] NEXT_PUBLIC_APP_URL:", configuredAppUrl ?? "not configured");
+    console.log("[Forgot Password] redirectTo:", redirectTo);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo
     });
+
+    if (error) {
+      console.error("[Forgot Password] Supabase error:", error);
+      setMessage(error.message);
+      setIsSending(false);
+      return;
+    }
 
     setMessage("If this email exists, we've sent password reset instructions.");
     setIsSending(false);
