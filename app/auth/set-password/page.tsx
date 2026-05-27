@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
@@ -10,6 +10,8 @@ export default function SetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [isCheckingLink, setIsCheckingLink] = useState(true);
+  const [hasRecoverySession, setHasRecoverySession] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const supabase = useMemo(() => {
@@ -21,12 +23,83 @@ export default function SetPasswordPage() {
     return createClient(supabaseUrl, supabaseAnonKey);
   }, []);
 
+  useEffect(() => {
+    async function prepareRecoverySession() {
+      if (!supabase) {
+        setMessage("StudentHub is not connected to Supabase yet.");
+        setIsCheckingLink(false);
+        return;
+      }
+
+      const url = new URL(window.location.href);
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      const code = url.searchParams.get("code");
+      const linkError = hashParams.get("error_description") ?? url.searchParams.get("error_description");
+
+      if (linkError) {
+        setMessage(decodeURIComponent(linkError));
+        setHasRecoverySession(false);
+        setIsCheckingLink(false);
+        return;
+      }
+
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        });
+
+        if (error) {
+          setMessage("This password setup link is invalid or has expired. Please request a new reset email.");
+          setHasRecoverySession(false);
+          setIsCheckingLink(false);
+          return;
+        }
+
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+        if (error) {
+          setMessage("This password setup link is invalid or has expired. Please request a new reset email.");
+          setHasRecoverySession(false);
+          setIsCheckingLink(false);
+          return;
+        }
+
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        setMessage("Open this page from your StudentHub invitation or password reset email. If the link has expired, request a new one.");
+        setHasRecoverySession(false);
+      } else {
+        setHasRecoverySession(true);
+      }
+
+      setIsCheckingLink(false);
+    }
+
+    void prepareRecoverySession();
+  }, [supabase]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
 
     if (!supabase) {
       setMessage("StudentHub is not connected to Supabase yet.");
+      return;
+    }
+
+    if (!hasRecoverySession) {
+      setMessage("This password setup link is invalid or has expired. Please request a new reset email.");
       return;
     }
 
@@ -63,6 +136,7 @@ export default function SetPasswordPage() {
           <p className="mt-2 text-sm text-slate-600">
             Use the secure link from your email to create or reset your StudentHub password.
           </p>
+          {isCheckingLink ? <p className="mt-4 rounded-md bg-era-paper p-3 text-sm font-semibold text-era-navy">Checking secure link...</p> : null}
 
           <form className="mt-5 grid gap-4" onSubmit={handleSubmit}>
             <label className="grid gap-2 text-sm font-bold text-era-navy">
@@ -72,9 +146,10 @@ export default function SetPasswordPage() {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                autoComplete="new-password"
-                required
-              />
+              autoComplete="new-password"
+              disabled={isCheckingLink || !hasRecoverySession}
+              required
+            />
             </label>
             <label className="grid gap-2 text-sm font-bold text-era-navy">
               Confirm password
@@ -83,15 +158,16 @@ export default function SetPasswordPage() {
                 type="password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
-                autoComplete="new-password"
-                required
-              />
+              autoComplete="new-password"
+              disabled={isCheckingLink || !hasRecoverySession}
+              required
+            />
             </label>
 
             <button
               className="min-h-11 rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white hover:bg-era-navy disabled:cursor-not-allowed disabled:opacity-70"
               type="submit"
-              disabled={isSaving}
+              disabled={isSaving || isCheckingLink || !hasRecoverySession}
             >
               {isSaving ? "Saving..." : "Save password"}
             </button>
