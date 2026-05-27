@@ -86,7 +86,7 @@ async function sendStudentHubInvite(user: InvitationUser): Promise<InviteResult>
       type: "recovery",
       email,
       options: {
-        redirectTo: `${appConfig.appUrl}/auth/set-password`
+        redirectTo: `${appConfig.appUrl}/set-password`
       }
     });
 

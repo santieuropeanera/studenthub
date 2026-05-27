@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
 
     const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
     const appUrl = (configuredAppUrl ?? "https://studenthub-jade.vercel.app").replace(/\/$/, "");
-    const redirectTo = `${appUrl}/auth/set-password`;
+    const redirectTo = `${appUrl}/set-password`;
 
     console.log("[Forgot Password] NEXT_PUBLIC_APP_URL:", configuredAppUrl ?? "not configured");
     console.log("[Forgot Password] redirectTo:", redirectTo);
