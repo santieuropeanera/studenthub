@@ -303,11 +303,11 @@ export function AdminUsersSummary() {
             <table className="w-full min-w-[780px] text-left text-sm">
               <thead className="bg-era-sky text-era-navy">
                 <tr>
-                  <th className="p-3">Name</th>
-                  <th className="p-3">Group</th>
-                  <th className="p-3">Work placement</th>
-                  <th className="p-3">Phone</th>
-                  <th className="p-3">Details</th>
+                  <th className="px-3 py-2">Name</th>
+                  <th className="px-3 py-2">Group</th>
+                  <th className="px-3 py-2">Work placement</th>
+                  <th className="px-3 py-2">Phone</th>
+                  <th className="px-3 py-2">Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -317,13 +317,13 @@ export function AdminUsersSummary() {
                   return (
                     <Fragment key={user.id}>
                       <tr className="border-b border-slate-100">
-                        <td className="p-3 font-semibold">{user.fullName}</td>
-                        <td className="p-3">{user.groupName}</td>
-                        <td className="p-3">{user.workPlacementName}</td>
-                        <td className="p-3">{user.phone}</td>
-                        <td className="p-3">
+                        <td className="px-3 py-2 font-semibold leading-5">{user.fullName}</td>
+                        <td className="px-3 py-2 leading-5">{user.groupName}</td>
+                        <td className="px-3 py-2 leading-5">{user.workPlacementName}</td>
+                        <td className="px-3 py-2 leading-5">{user.phone}</td>
+                        <td className="px-3 py-2">
                           <button
-                            className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-2 text-xs font-bold text-era-navy hover:border-era-orange"
+                            className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 px-2.5 py-1 text-xs font-bold text-era-navy hover:border-era-orange"
                             type="button"
                             onClick={() => setExpandedUserId(isExpanded ? null : user.id)}
                           >
@@ -334,7 +334,7 @@ export function AdminUsersSummary() {
                       </tr>
                       {isExpanded ? (
                         <tr className="border-b border-slate-100 bg-era-paper">
-                          <td className="p-4" colSpan={5}>
+                          <td className="px-3 py-3" colSpan={5}>
                             <UserDetails user={user} />
                           </td>
                         </tr>
@@ -355,15 +355,15 @@ export function AdminUsersSummary() {
 function UserDetails({ user }: { user: AdminUser }) {
   if (user.role === "student") {
     return (
-      <div className="grid gap-4 md:grid-cols-[auto_1fr]">
+      <div className="grid gap-3 md:grid-cols-[auto_1fr]">
         {user.profilePhotoUrl ? (
-          <img className="h-24 w-24 rounded-lg border border-slate-200 object-cover" src={user.profilePhotoUrl} alt={`${user.fullName} profile photo`} />
+          <img className="h-16 w-16 rounded-lg border border-slate-200 object-cover" src={user.profilePhotoUrl} alt={`${user.fullName} profile photo`} />
         ) : (
-          <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-slate-200 bg-white text-era-navy">
-            <UserRound className="h-10 w-10" aria-hidden="true" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-slate-200 bg-white text-era-navy">
+            <UserRound className="h-7 w-7" aria-hidden="true" />
           </div>
         )}
-        <dl className="grid gap-3 text-sm md:grid-cols-2">
+        <dl className="grid gap-2 text-sm md:grid-cols-3">
           <Detail label="Email" value={user.email} />
           <Detail label="Role" value={user.role} />
           <Detail label="Accommodation" value={user.accommodationName} />
@@ -380,7 +380,7 @@ function UserDetails({ user }: { user: AdminUser }) {
 
   if (user.role === "teacher") {
     return (
-      <dl className="grid gap-3 text-sm md:grid-cols-2">
+      <dl className="grid gap-2 text-sm md:grid-cols-3">
         <Detail label="Email" value={user.email} />
         <Detail label="Role" value={user.role} />
         <Detail label="Group" value={user.groupName} />
@@ -390,7 +390,7 @@ function UserDetails({ user }: { user: AdminUser }) {
   }
 
   return (
-    <dl className="grid gap-3 text-sm md:grid-cols-2">
+    <dl className="grid gap-2 text-sm md:grid-cols-3">
       <Detail label="Email" value={user.email} />
       <Detail label="Role" value={user.role} />
     </dl>
@@ -399,7 +399,7 @@ function UserDetails({ user }: { user: AdminUser }) {
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-white p-3">
+    <div className="rounded-md bg-white px-3 py-2">
       <dt className="font-bold text-era-navy">{label}</dt>
       <dd className="mt-1 text-slate-700">{value}</dd>
     </div>
