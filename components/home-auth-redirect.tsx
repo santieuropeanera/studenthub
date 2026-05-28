@@ -25,7 +25,7 @@ export function HomeAuthRedirect() {
 
       const { data: profileRows, error } = await supabase
         .from("profiles")
-        .select("role, email, onboarding_completed")
+        .select("role, email, onboarding_completed, teacher_onboarding_completed")
         .ilike("email", email)
         .limit(1);
 
@@ -37,7 +37,7 @@ export function HomeAuthRedirect() {
       const profile = profileRows?.find((item) => item.email?.trim().toLowerCase() === email);
 
       if (profile?.role === "student") router.replace(profile.onboarding_completed ? "/student" : "/student/onboarding");
-      else if (profile?.role === "teacher") router.replace("/teacher");
+      else if (profile?.role === "teacher") router.replace(profile.teacher_onboarding_completed ? "/teacher" : "/teacher/onboarding");
       else if (profile?.role === "admin") router.replace("/admin");
     }
 

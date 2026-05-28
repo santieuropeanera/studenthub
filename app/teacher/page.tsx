@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { BedDouble, BriefcaseBusiness, CalendarDays, ChevronDown, HeartPulse, Home, Phone, PhoneCall, Search, Siren, UserRound, UsersRound, type LucideIcon } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -59,6 +61,7 @@ function normalizeGroup(value?: string | null) {
 }
 
 export default function TeacherPage() {
+  const router = useRouter();
   const [data, setData] = useState<TeacherDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -93,7 +96,7 @@ export default function TeacherPage() {
 
         const { data: profileRows, error: profileError } = await supabase
           .from("profiles")
-          .select("id, full_name, email, role, group_id, school_id, group_name")
+          .select("id, full_name, email, role, group_id, school_id, group_name, teacher_onboarding_completed")
           .ilike("email", normalizedEmail)
           .eq("role", "teacher")
           .limit(1);
@@ -104,6 +107,11 @@ export default function TeacherPage() {
 
         if (!teacherProfile) {
           setMessage("No teacher profile found for this account yet.");
+          return;
+        }
+
+        if (teacherProfile.teacher_onboarding_completed === false) {
+          router.replace("/teacher/onboarding");
           return;
         }
 
@@ -262,6 +270,11 @@ export default function TeacherPage() {
         <SummaryCard label="Email" value={data.teacher.email} />
         <SummaryCard label="Group" value={data.teacher.groupName} />
       </section>
+      <div className="mt-4">
+        <Link className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-era-blue px-4 py-2 text-sm font-bold text-era-blue hover:bg-era-paper sm:w-auto" href="/teacher/onboarding?review=1">
+          View onboarding again
+        </Link>
+      </div>
 
       <section id="students" className="mt-5 sm:mt-6">
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
