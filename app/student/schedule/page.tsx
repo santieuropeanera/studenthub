@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { ArrowLeft, BedDouble, BriefcaseBusiness, CalendarDays, HeartPulse, Home, ImageIcon, QrCode, Siren } from "lucide-react";
+import { ArrowLeft, BedDouble, BriefcaseBusiness, CalendarDays, HeartPulse, Home, ImageIcon, QrCode, Siren, SmilePlus } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { LoadingCardSkeleton } from "@/components/loading-states";
 
@@ -22,6 +22,7 @@ const studentNav = [
   { href: "/student#medical", label: "Medical Help", icon: HeartPulse },
   { href: "/student/schedule", label: "Schedule", icon: CalendarDays },
   { href: "/student/activities", label: "Activities", icon: ImageIcon },
+  { href: "/student/support", label: "Student Support", icon: SmilePlus },
   { href: "/student#emergency", label: "Emergency", icon: Siren }
 ];
 
@@ -29,6 +30,7 @@ const studentMobileNav = [
   { href: "/student", label: "Dashboard", icon: Home },
   { href: "/student/schedule", label: "Schedule", icon: CalendarDays },
   { href: "/student/activities", label: "Activities", icon: ImageIcon },
+  { href: "/student/support", label: "Student Support", icon: SmilePlus },
   { href: "/student#emergency", label: "Emergency QR Card", icon: QrCode },
   { href: "/student#medical", label: "Medical Help", icon: HeartPulse },
   { href: "/student#accommodation", label: "Accommodation", icon: BedDouble },

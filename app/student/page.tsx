@@ -18,6 +18,7 @@ import {
   PhoneCall,
   QrCode,
   Siren,
+  SmilePlus,
   Upload,
   UserRound
 } from "lucide-react";
@@ -78,6 +79,7 @@ const studentNav = [
   { href: "#medical", label: "Medical Help", icon: HeartPulse },
   { href: "/student/schedule", label: "Schedule", icon: CalendarDays },
   { href: "/student/activities", label: "Activities", icon: ImageIcon },
+  { href: "/student/support", label: "Student Support", icon: SmilePlus },
   { href: "#emergency", label: "Emergency", icon: Siren }
 ];
 
@@ -85,6 +87,7 @@ const studentMobileNav = [
   { href: "/student", label: "Dashboard", icon: Home },
   { href: "/student/schedule", label: "Schedule", icon: CalendarDays },
   { href: "/student/activities", label: "Activities", icon: ImageIcon },
+  { href: "/student/support", label: "Student Support", icon: SmilePlus },
   { href: "#emergency", label: "Emergency QR Card", icon: QrCode },
   { href: "#medical", label: "Medical Help", icon: HeartPulse },
   { href: "#accommodation", label: "Accommodation", icon: BedDouble },
@@ -863,6 +866,15 @@ export default function StudentPage() {
       </div>
 
       <section className="mt-5 grid gap-4 md:grid-cols-2">
+        <Link className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft transition hover:border-era-blue sm:p-5" href="/student/support">
+          <div className="flex items-start gap-3">
+            <SmilePlus className="h-6 w-6 shrink-0 text-era-blue" aria-hidden="true" />
+            <div>
+              <h2 className="text-xl font-black text-era-navy">Need some support?</h2>
+              <p className="mt-2 text-sm text-slate-600">Calm guidance for common mobility situations.</p>
+            </div>
+          </div>
+        </Link>
         <Link className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft transition hover:border-era-blue sm:p-5" href="/student/schedule">
           <div className="flex items-start gap-3">
             <CalendarDays className="h-6 w-6 shrink-0 text-era-blue" aria-hidden="true" />
