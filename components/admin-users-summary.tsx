@@ -98,11 +98,19 @@ function indexByUserId<Row extends { user_id: string | null }>(rows: Row[] | nul
   }, {});
 }
 
+function uniqueOptions(values: string[]) {
+  return Array.from(new Set(values.filter((value) => value && !["No group", "Not assigned"].includes(value)))).sort((a, b) =>
+    a.localeCompare(b)
+  );
+}
+
 export function AdminUsersSummary() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [groupFilter, setGroupFilter] = useState("");
+  const [placementFilter, setPlacementFilter] = useState("");
   const [message, setMessage] = useState("Loading users...");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -183,13 +191,16 @@ export function AdminUsersSummary() {
     void loadUsers();
   }, []);
 
+  const groupOptions = useMemo(() => uniqueOptions(users.map((user) => user.groupName)), [users]);
+  const placementOptions = useMemo(() => uniqueOptions(users.map((user) => user.workPlacementName)), [users]);
+
   const filteredUsers = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
 
-    if (!query) return users;
-
     return users.filter((user) =>
-      [
+      (!groupFilter || user.groupName === groupFilter) &&
+      (!placementFilter || user.workPlacementName === placementFilter) &&
+      (!query || [
         user.fullName,
         user.groupName,
         user.workPlacementName,
@@ -201,9 +212,14 @@ export function AdminUsersSummary() {
       ]
         .join(" ")
         .toLowerCase()
-        .includes(query)
+        .includes(query))
     );
-  }, [searchTerm, users]);
+  }, [groupFilter, placementFilter, searchTerm, users]);
+
+  function clearFilters() {
+    setGroupFilter("");
+    setPlacementFilter("");
+  }
 
   return (
     <section id="users" className="mt-5 rounded-lg border border-slate-200 bg-white p-4 shadow-soft sm:mt-6 sm:p-5">
@@ -230,17 +246,59 @@ export function AdminUsersSummary() {
               <LoadingCardSkeleton rows={3} />
             </div>
           ) : null}
-          <label className="relative block max-w-sm">
-            <span className="sr-only">Search users</span>
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-            <input
-              className="min-h-11 w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-era-blue focus:ring-2 focus:ring-era-sky"
-              type="search"
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
-          </label>
+          <div className="grid gap-3 rounded-md bg-era-paper p-3 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
+            <label className="grid gap-1 text-sm font-bold text-era-navy">
+              Group
+              <select
+                className="min-h-11 rounded-md border border-slate-300 bg-white px-3 py-2 font-normal outline-none focus:border-era-blue focus:ring-2 focus:ring-era-sky"
+                value={groupFilter}
+                onChange={(event) => setGroupFilter(event.target.value)}
+              >
+                <option value="">All groups</option>
+                {groupOptions.map((group) => (
+                  <option key={group} value={group}>{group}</option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm font-bold text-era-navy">
+              Work Placement
+              <select
+                className="min-h-11 rounded-md border border-slate-300 bg-white px-3 py-2 font-normal outline-none focus:border-era-blue focus:ring-2 focus:ring-era-sky"
+                value={placementFilter}
+                onChange={(event) => setPlacementFilter(event.target.value)}
+              >
+                <option value="">All work placements</option>
+                {placementOptions.map((placement) => (
+                  <option key={placement} value={placement}>{placement}</option>
+                ))}
+              </select>
+            </label>
+            <label className="relative grid gap-1 text-sm font-bold text-era-navy">
+              Search
+              <span className="sr-only">Search users</span>
+              <Search className="pointer-events-none absolute bottom-3.5 left-3 h-4 w-4 text-slate-400" aria-hidden="true" />
+              <input
+                className="min-h-11 w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 font-normal outline-none focus:border-era-blue focus:ring-2 focus:ring-era-sky"
+                type="search"
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </label>
+            <button
+              className="min-h-11 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-era-navy hover:border-era-orange"
+              type="button"
+              onClick={clearFilters}
+              disabled={!groupFilter && !placementFilter}
+            >
+              Clear filters
+            </button>
+          </div>
+          {!isLoading ? (
+            <p className="mt-3 text-sm font-semibold text-era-navy">
+              {filteredUsers.length} {filteredUsers.length === 1 ? "user" : "users"} found
+            </p>
+          ) : null}
           {!isLoading ? <div className="mt-4 overflow-x-auto rounded-md border border-slate-100">
             <table className="w-full min-w-[780px] text-left text-sm">
               <thead className="bg-era-sky text-era-navy">
