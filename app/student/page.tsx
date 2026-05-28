@@ -282,6 +282,7 @@ export default function StudentPage() {
   const router = useRouter();
   const [data, setData] = useState<StudentDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProfileExpanded, setIsProfileExpanded] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [isSavingPhone, setIsSavingPhone] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -546,10 +547,12 @@ export default function StudentPage() {
       setData({
         ...data,
         profile: {
+          ...data.profile,
           phoneNumber: phoneInput.trim() || null
         }
       });
       setIsEditingPhone(false);
+      setIsProfileExpanded(false);
       setPhoneMessage("Phone number saved.");
     } catch (error) {
       console.error("[Student Dashboard] Could not save phone number", error);
@@ -628,13 +631,17 @@ export default function StudentPage() {
   function startEditingPhone() {
     setPhoneInput(data?.profile.phoneNumber ?? "");
     setPhoneMessage("");
+    setPhotoMessage("");
+    setIsProfileExpanded(true);
     setIsEditingPhone(true);
   }
 
   function cancelEditingPhone() {
     setPhoneInput(data?.profile.phoneNumber ?? "");
     setPhoneMessage("");
+    setPhotoMessage("");
     setIsEditingPhone(false);
+    setIsProfileExpanded(false);
   }
 
   function openEmergencyCard() {
@@ -703,7 +710,36 @@ export default function StudentPage() {
     >
       <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
         <InfoCard title="Profile / My Information" icon={UserRound} accent="teal">
-          <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              {profile.profilePhotoUrl ? (
+                <img
+                  className="h-20 w-20 rounded-full border border-slate-200 object-cover shadow-soft"
+                  src={profile.profilePhotoUrl}
+                  alt={`${user.fullName} profile photo`}
+                />
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center rounded-full border border-slate-200 bg-era-sky text-era-navy shadow-soft">
+                  <UserRound className="h-9 w-9" aria-hidden="true" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="break-words text-lg font-black text-era-navy">{user.fullName}</p>
+              </div>
+            </div>
+            <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
+              <button className="min-h-11 rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white" type="button" onClick={startEditingPhone}>
+                Edit
+              </button>
+              <Link className="inline-flex min-h-11 items-center justify-center rounded-md border border-era-blue px-4 py-2 text-sm font-bold text-era-blue hover:bg-era-paper" href="/student/onboarding?review=1">
+                View onboarding again
+              </Link>
+            </div>
+          </div>
+
+          {isProfileExpanded ? (
+            <div className="mt-5 border-t border-slate-200 pt-4">
+              <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
             {profile.profilePhotoUrl ? (
               <img
                 className="h-20 w-20 rounded-full border border-slate-200 object-cover shadow-soft"
@@ -736,25 +772,20 @@ export default function StudentPage() {
               {photoMessage ? <p className="mt-2 text-sm font-semibold text-era-navy">{photoMessage}</p> : null}
             </div>
           </div>
-          <dl className="grid gap-3 text-sm">
-            <div><dt className="font-bold text-era-navy">Group</dt><dd>{group?.name ?? "Not assigned yet"}</dd></div>
-            <div><dt className="font-bold text-era-navy">Email</dt><dd>{user.email}</dd></div>
-          </dl>
-          <div className="mt-3 grid gap-2">
-            <label className="grid gap-1 text-sm font-bold text-era-navy">
-              Phone
-              {isEditingPhone ? (
+              <dl className="grid gap-3 text-sm">
+                <div><dt className="font-bold text-era-navy">Group</dt><dd>{group?.name ?? "Not assigned yet"}</dd></div>
+                <div><dt className="font-bold text-era-navy">Email</dt><dd>{user.email}</dd></div>
+              </dl>
+              <div className="mt-3 grid gap-2">
+                <label className="grid gap-1 text-sm font-bold text-era-navy">
+                  Phone
                 <input
                   className="rounded-md border border-slate-300 px-3 py-2 font-normal"
                   value={phoneInput}
                   onChange={(event) => setPhoneInput(event.target.value)}
                 />
-              ) : (
-                <span className="font-normal text-era-ink">{profile.phoneNumber ?? "Not provided"}</span>
-              )}
-            </label>
-            <div className="grid gap-2 sm:flex sm:flex-wrap">
-              {isEditingPhone ? (
+                </label>
+                <div className="grid gap-2 sm:flex sm:flex-wrap">
                 <>
                   <button className="min-h-11 rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white disabled:opacity-70" type="button" onClick={savePhoneNumber} disabled={isSavingPhone}>
                     {isSavingPhone ? <LoadingButtonContent label="Saving..." /> : "Save"}
@@ -763,17 +794,11 @@ export default function StudentPage() {
                     Cancel
                   </button>
                 </>
-              ) : (
-                <button className="min-h-11 rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white" type="button" onClick={startEditingPhone}>
-                  Edit
-                </button>
-              )}
+                </div>
+                {phoneMessage ? <p className="text-sm font-semibold text-era-navy">{phoneMessage}</p> : null}
+              </div>
             </div>
-            {phoneMessage ? <p className="text-sm font-semibold text-era-navy">{phoneMessage}</p> : null}
-          </div>
-          <Link className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md border border-era-blue px-4 py-2 text-sm font-bold text-era-blue hover:bg-era-paper sm:w-auto" href="/student/onboarding?review=1">
-            View onboarding again
-          </Link>
+          ) : null}
         </InfoCard>
 
         <InfoCard id="internship" title="Internship Placement" icon={BriefcaseBusiness} accent="blue">
