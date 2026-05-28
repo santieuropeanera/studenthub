@@ -84,7 +84,7 @@ export function DashboardShell({ title, subtitle, roleLabel, navItems, mobileNav
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
-        <div className="mb-5 sm:mb-6">
+        <div className="mb-6 hidden md:block">
           <h2 className="break-words text-2xl font-black text-era-navy sm:text-3xl">{title}</h2>
           {subtitle ? <p className="mt-2 max-w-3xl text-base text-slate-600">{subtitle}</p> : null}
         </div>
