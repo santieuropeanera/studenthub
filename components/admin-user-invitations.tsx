@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { MailPlus, RefreshCw, Send } from "lucide-react";
+import { ChevronDown, MailPlus, RefreshCw, Send } from "lucide-react";
 import { LoadingButtonContent } from "@/components/loading-states";
 
 type InvitationUser = {
@@ -29,6 +29,7 @@ export function AdminUserInvitations() {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
 
   const supabase = useMemo(() => {
@@ -42,6 +43,7 @@ export function AdminUserInvitations() {
 
   const pendingUsers = users.filter((user) => !user.invite_sent_at && user.invite_status !== "invited");
   const invitedUsers = users.filter((user) => user.invite_sent_at || user.invite_status === "invited");
+  const failedUsers = users.filter((user) => user.invite_status === "error" || user.last_invite_error);
 
   async function authHeaders() {
     if (!supabase) throw new Error("Supabase is not configured yet.");
@@ -149,41 +151,73 @@ export function AdminUserInvitations() {
           </p>
         </div>
         <button
-          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white hover:bg-era-navy disabled:cursor-not-allowed disabled:opacity-70 sm:w-fit"
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white hover:bg-era-navy sm:w-fit"
           type="button"
-          onClick={sendNewInvites}
-          disabled={isSending || isLoading || pendingUsers.length === 0}
+          onClick={() => setIsOpen((current) => !current)}
+          aria-expanded={isOpen}
         >
-          {isSending ? <LoadingButtonContent label="Sending..." /> : (
-            <>
-              <Send className="h-4 w-4" aria-hidden="true" />
-              Send invites to new users
-            </>
-          )}
+          {isOpen ? "Collapse invitations" : "Manage invitations"}
+          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
         </button>
       </div>
 
-      {message ? <p className="mt-3 rounded-md bg-era-paper p-3 text-sm font-semibold text-era-navy">{message}</p> : null}
-
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        <InvitationList
-          title={`Pending users (${pendingUsers.length})`}
-          emptyText={isLoading ? "Loading pending users..." : "No pending users."}
-          users={pendingUsers}
-          actionLabel="Send invite"
-          resendingId={resendingId}
-          onResend={resendInvite}
-        />
-        <InvitationList
-          title={`Already invited (${invitedUsers.length})`}
-          emptyText={isLoading ? "Loading invited users..." : "No users have been invited yet."}
-          users={invitedUsers}
-          actionLabel="Resend invite"
-          resendingId={resendingId}
-          onResend={resendInvite}
-        />
+      <div className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
+        <InviteStat label="Pending" value={pendingUsers.length} />
+        <InviteStat label="Sent" value={invitedUsers.length} />
+        <InviteStat label="Failed" value={failedUsers.length} />
       </div>
+
+      {isOpen ? (
+        <>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-600">Invite newly synced students and teachers, or resend a setup link manually.</p>
+            <button
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white hover:bg-era-navy disabled:cursor-not-allowed disabled:opacity-70 sm:w-fit"
+              type="button"
+              onClick={sendNewInvites}
+              disabled={isSending || isLoading || pendingUsers.length === 0}
+            >
+              {isSending ? <LoadingButtonContent label="Sending..." /> : (
+                <>
+                  <Send className="h-4 w-4" aria-hidden="true" />
+                  Send invites to new users
+                </>
+              )}
+            </button>
+          </div>
+
+          {message ? <p className="mt-3 rounded-md bg-era-paper p-3 text-sm font-semibold text-era-navy">{message}</p> : null}
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <InvitationList
+              title={`Pending users (${pendingUsers.length})`}
+              emptyText={isLoading ? "Loading pending users..." : "No pending users."}
+              users={pendingUsers}
+              actionLabel="Send invite"
+              resendingId={resendingId}
+              onResend={resendInvite}
+            />
+            <InvitationList
+              title={`Already invited (${invitedUsers.length})`}
+              emptyText={isLoading ? "Loading invited users..." : "No users have been invited yet."}
+              users={invitedUsers}
+              actionLabel="Resend invite"
+              resendingId={resendingId}
+              onResend={resendInvite}
+            />
+          </div>
+        </>
+      ) : null}
     </section>
+  );
+}
+
+function InviteStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md bg-era-paper px-3 py-2">
+      <p className="text-xs font-bold uppercase text-era-teal">{label}</p>
+      <p className="mt-1 text-lg font-black text-era-navy">{value}</p>
+    </div>
   );
 }
 
