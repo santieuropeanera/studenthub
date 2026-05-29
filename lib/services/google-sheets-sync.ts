@@ -167,6 +167,10 @@ export async function syncGoogleSheetsData() {
       scheduleUpdated: scheduleResult.updated,
       scheduleDeactivated: scheduleResult.deactivated,
       studentsImported: peopleResult.imported,
+      usersCreated: peopleResult.created,
+      usersUpdated: peopleResult.updated,
+      usersDeactivated: peopleResult.deactivated,
+      usersReactivated: peopleResult.reactivated,
       skippedRows: peopleResult.errors,
       catalogTabs
     };
@@ -365,11 +369,17 @@ async function upsertPeople(
 
   const errors: string[] = [];
   let imported = 0;
+  let created = 0;
+  let updated = 0;
+  let deactivated = 0;
+  let reactivated = 0;
+  const sheetEmails = new Set(rows.map((row) => row.email.trim().toLowerCase()));
 
   for (const row of rows) {
     try {
       const schoolId = await findOrCreateSchool(supabase, row.school_name);
       const groupId = await findOrCreateGroup(supabase, schoolId, row.group_name);
+      const existingProfile = await findProfileByEmail(supabase, row.email);
       const userId = await findOrCreateAuthUser(supabase, row.email, row.full_name);
 
       const { error: profileError } = await supabase.from("profiles").upsert(
@@ -380,6 +390,9 @@ async function upsertPeople(
           email: row.email,
           phone: row.phone ?? null,
           auth_user_id: userId,
+          is_active: true,
+          deactivated_at: null,
+          deactivated_reason: null,
           school_id: schoolId,
           group_id: groupId,
           group_name: row.group_name
@@ -428,6 +441,9 @@ async function upsertPeople(
       }
 
       imported += 1;
+      if (!existingProfile) created += 1;
+      else if (existingProfile.is_active === false) reactivated += 1;
+      else updated += 1;
       console.log(`[Google Sheets Sync] Imported ${row.role}: ${row.email}`);
     } catch (error) {
       const message = `${row.email}: ${error instanceof Error ? error.message : "Unknown row error"}`;
@@ -436,7 +452,49 @@ async function upsertPeople(
     }
   }
 
-  return { imported, errors };
+  const { data: activeSheetManagedUsers, error: activeUsersError } = await supabase
+    .from("profiles")
+    .select("id, email")
+    .in("role", ["student", "teacher"])
+    .eq("is_active", true);
+
+  if (activeUsersError) {
+    throw new Error(`Could not read active users for lifecycle cleanup: ${activeUsersError.message}`);
+  }
+
+  const missingUserIds = (activeSheetManagedUsers ?? [])
+    .filter((profile) => !sheetEmails.has(String(profile.email ?? "").trim().toLowerCase()))
+    .map((profile) => profile.id as string);
+
+  if (missingUserIds.length) {
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        is_active: false,
+        deactivated_at: new Date().toISOString(),
+        deactivated_reason: "Removed from Google Sheets sync"
+      })
+      .in("id", missingUserIds);
+
+    if (error) {
+      throw new Error(`Could not deactivate users removed from Sheets: ${error.message}`);
+    }
+
+    deactivated = missingUserIds.length;
+  }
+
+  return { imported, created, updated, deactivated, reactivated, errors };
+}
+
+async function findProfileByEmail(supabase: ReturnType<typeof createSupabaseAdminClient>, email: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, is_active")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (error) throw new Error(`Could not read profile "${email}": ${error.message}`);
+  return data as { id: string; is_active?: boolean | null } | null;
 }
 
 async function findOrCreateSchool(supabase: ReturnType<typeof createSupabaseAdminClient>, name: string) {

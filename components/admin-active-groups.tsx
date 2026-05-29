@@ -41,7 +41,7 @@ export function AdminActiveGroups() {
           { data: teacherProfiles, error: teacherProfilesError },
           { data: scheduleItems, error: scheduleItemsError }
         ] = await Promise.all([
-          supabase.from("profiles").select("group_name"),
+          supabase.from("profiles").select("group_name").eq("is_active", true),
           supabase.from("student_profiles").select("group_name"),
           supabase.from("teacher_profiles").select("group_name"),
           supabase.from("schedule_items").select("group_name").eq("is_active", true)

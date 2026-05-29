@@ -60,10 +60,25 @@ function normalizeGroup(value?: string | null) {
     .toLowerCase();
 }
 
+function InactiveAccessMessage() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-era-paper px-4 py-8">
+      <section className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-5 text-center shadow-soft sm:p-6">
+        <h1 className="text-2xl font-black text-era-navy">Access inactive</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600">Your StudentHub access is inactive. Please contact European Era.</p>
+        <a className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white" href="/login">
+          Back to sign in
+        </a>
+      </section>
+    </main>
+  );
+}
+
 export default function TeacherPage() {
   const router = useRouter();
   const [data, setData] = useState<TeacherDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInactiveAccess, setIsInactiveAccess] = useState(false);
   const [message, setMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
@@ -96,7 +111,7 @@ export default function TeacherPage() {
 
         const { data: profileRows, error: profileError } = await supabase
           .from("profiles")
-          .select("id, full_name, email, role, group_id, school_id, group_name, teacher_onboarding_completed")
+          .select("id, full_name, email, role, group_id, school_id, group_name, teacher_onboarding_completed, is_active")
           .ilike("email", normalizedEmail)
           .eq("role", "teacher")
           .limit(1);
@@ -107,6 +122,13 @@ export default function TeacherPage() {
 
         if (!teacherProfile) {
           setMessage("No teacher profile found for this account yet.");
+          return;
+        }
+
+        if (teacherProfile.is_active === false) {
+          await supabase.auth.signOut();
+          setIsInactiveAccess(true);
+          setMessage("Your StudentHub access is inactive. Please contact European Era.");
           return;
         }
 
@@ -228,6 +250,10 @@ export default function TeacherPage() {
 
     void loadTeacherDashboard();
   }, []);
+
+  if (isInactiveAccess) {
+    return <InactiveAccessMessage />;
+  }
 
   if (isLoading) {
     return (

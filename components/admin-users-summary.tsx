@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { ChevronDown, Search, UserRound, UsersRound } from "lucide-react";
+import { ChevronDown, Power, Search, Trash2, UserRound, UsersRound } from "lucide-react";
 import { LoadingCardSkeleton } from "@/components/loading-states";
 
 type ProfileRow = {
@@ -13,6 +13,9 @@ type ProfileRow = {
   role: string | null;
   group_id: string | null;
   group_name: string | null;
+  is_active: boolean | null;
+  deactivated_at: string | null;
+  deactivated_reason: string | null;
 };
 
 type StudentProfileRow = {
@@ -67,6 +70,9 @@ type AdminUser = {
   workPlacementAddress: string;
   workingHours: string;
   hospitalName: string;
+  isActive: boolean;
+  deactivatedAt: string | null;
+  deactivatedReason: string | null;
 };
 
 function createSupabaseBrowserClient() {
@@ -111,8 +117,10 @@ export function AdminUsersSummary() {
   const [searchTerm, setSearchTerm] = useState("");
   const [groupFilter, setGroupFilter] = useState("");
   const [placementFilter, setPlacementFilter] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
   const [message, setMessage] = useState("Loading users...");
   const [isLoading, setIsLoading] = useState(true);
+  const [actionUserId, setActionUserId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadUsers() {
@@ -127,7 +135,7 @@ export function AdminUsersSummary() {
           { data: accommodations, error: accommodationsError },
           { data: hospitals, error: hospitalsError }
         ] = await Promise.all([
-          supabase.from("profiles").select("id, full_name, email, phone, role, group_id, group_name").order("full_name", { ascending: true }),
+          supabase.from("profiles").select("id, full_name, email, phone, role, group_id, group_name, is_active, deactivated_at, deactivated_reason").order("full_name", { ascending: true }),
           supabase.from("student_profiles").select("user_id, group_name, phone_number, profile_photo_url, internship_placement_id, accommodation_id"),
           supabase.from("teacher_profiles").select("user_id, group_name"),
           supabase.from("groups").select("id, name"),
@@ -175,7 +183,10 @@ export function AdminUsersSummary() {
               workPlacementName: normalize(placement?.name, "Not assigned"),
               workPlacementAddress: normalize(placement?.address, "Address not available"),
               workingHours: normalize(placement?.working_hours, "Not provided"),
-              hospitalName: normalize(hospital?.name, "Not assigned")
+              hospitalName: normalize(hospital?.name, "Not assigned"),
+              isActive: profile.is_active !== false,
+              deactivatedAt: profile.deactivated_at,
+              deactivatedReason: profile.deactivated_reason
             };
           })
         );
@@ -198,6 +209,7 @@ export function AdminUsersSummary() {
     const query = searchTerm.trim().toLowerCase();
 
     return users.filter((user) =>
+      (showInactive || user.isActive) &&
       (!groupFilter || user.groupName === groupFilter) &&
       (!placementFilter || user.workPlacementName === placementFilter) &&
       (!query || [
@@ -214,11 +226,73 @@ export function AdminUsersSummary() {
         .toLowerCase()
         .includes(query))
     );
-  }, [groupFilter, placementFilter, searchTerm, users]);
+  }, [groupFilter, placementFilter, searchTerm, showInactive, users]);
 
   function clearFilters() {
     setGroupFilter("");
     setPlacementFilter("");
+  }
+
+  async function authHeaders() {
+    const supabase = createSupabaseBrowserClient();
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) throw new Error("Please sign in as an admin.");
+    return { Authorization: `Bearer ${session.access_token}` };
+  }
+
+  async function runLifecycleAction(user: AdminUser, action: "deactivate" | "reactivate" | "delete") {
+    let confirmation: string | null = null;
+
+    if (action === "delete") {
+      confirmation = window.prompt(`Type DELETE to permanently delete ${user.fullName}. This cannot be undone.`);
+      if (confirmation !== "DELETE") return;
+    } else if (!window.confirm(`${action === "deactivate" ? "Deactivate" : "Reactivate"} ${user.fullName}?`)) {
+      return;
+    }
+
+    setActionUserId(user.id);
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/admin/users/lifecycle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(await authHeaders())
+        },
+        body: JSON.stringify({ action, userId: user.id, confirmation })
+      });
+      const body = await response.json();
+
+      if (!response.ok || !body.ok) {
+        throw new Error(body.error ?? "Could not update user.");
+      }
+
+      setMessage(body.message ?? "User updated.");
+      if (action === "delete") {
+        setUsers((current) => current.filter((item) => item.id !== user.id));
+      } else {
+        setUsers((current) =>
+          current.map((item) =>
+            item.id === user.id
+              ? {
+                  ...item,
+                  isActive: action === "reactivate",
+                  deactivatedAt: action === "deactivate" ? new Date().toISOString() : null,
+                  deactivatedReason: action === "deactivate" ? "Manually deactivated by admin" : null
+                }
+              : item
+          )
+        );
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not update user.");
+    } finally {
+      setActionUserId(null);
+    }
   }
 
   return (
@@ -226,7 +300,9 @@ export function AdminUsersSummary() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-black text-era-navy sm:text-2xl">All Users</h2>
-          <p className="mt-1 text-sm text-slate-600">{message || `${users.length} real users loaded from Supabase.`}</p>
+          <p className="mt-1 text-sm text-slate-600">
+            {message || `${users.filter((user) => user.isActive).length} active users loaded from Supabase.`}
+          </p>
         </div>
         <button
           className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white hover:bg-era-navy sm:w-fit"
@@ -293,6 +369,10 @@ export function AdminUsersSummary() {
             >
               Clear filters
             </button>
+            <label className="flex min-h-11 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-era-navy md:col-span-4">
+              <input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} />
+              Show inactive users
+            </label>
           </div>
           {!isLoading ? (
             <p className="mt-3 text-sm font-semibold text-era-navy">
@@ -318,7 +398,12 @@ export function AdminUsersSummary() {
                     <Fragment key={user.id}>
                       <tr className="border-b border-slate-100">
                         <td className="px-3 py-2 font-semibold leading-5">{user.fullName}</td>
-                        <td className="px-3 py-2 leading-5">{user.groupName}</td>
+                        <td className="px-3 py-2 leading-5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {user.groupName}
+                            {!user.isActive ? <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">Inactive</span> : null}
+                          </div>
+                        </td>
                         <td className="px-3 py-2 leading-5">{user.workPlacementName}</td>
                         <td className="px-3 py-2 leading-5">{user.phone}</td>
                         <td className="px-3 py-2">
@@ -335,7 +420,7 @@ export function AdminUsersSummary() {
                       {isExpanded ? (
                         <tr className="border-b border-slate-100 bg-era-paper">
                           <td className="px-3 py-3" colSpan={5}>
-                            <UserDetails user={user} />
+                            <UserDetails user={user} onLifecycleAction={runLifecycleAction} isBusy={actionUserId === user.id} />
                           </td>
                         </tr>
                       ) : null}
@@ -352,48 +437,91 @@ export function AdminUsersSummary() {
   );
 }
 
-function UserDetails({ user }: { user: AdminUser }) {
+function UserDetails({
+  user,
+  onLifecycleAction,
+  isBusy
+}: {
+  user: AdminUser;
+  onLifecycleAction: (user: AdminUser, action: "deactivate" | "reactivate" | "delete") => void;
+  isBusy: boolean;
+}) {
+  const actions = (
+    <div className="mt-3 flex flex-wrap gap-2">
+      <button
+        className="inline-flex min-h-9 items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-era-navy disabled:opacity-60"
+        type="button"
+        disabled={isBusy || user.role === "admin"}
+        onClick={() => onLifecycleAction(user, user.isActive ? "deactivate" : "reactivate")}
+      >
+        <Power className="h-3.5 w-3.5" aria-hidden="true" />
+        {user.isActive ? "Deactivate" : "Reactivate"}
+      </button>
+      <button
+        className="inline-flex min-h-9 items-center gap-1 rounded-md bg-red-600 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60"
+        type="button"
+        disabled={isBusy || user.role === "admin"}
+        onClick={() => onLifecycleAction(user, "delete")}
+      >
+        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+        Delete permanently
+      </button>
+    </div>
+  );
+
   if (user.role === "student") {
     return (
-      <div className="grid gap-3 md:grid-cols-[auto_1fr]">
-        {user.profilePhotoUrl ? (
-          <img className="h-16 w-16 rounded-lg border border-slate-200 object-cover" src={user.profilePhotoUrl} alt={`${user.fullName} profile photo`} />
-        ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-slate-200 bg-white text-era-navy">
-            <UserRound className="h-7 w-7" aria-hidden="true" />
-          </div>
-        )}
-        <dl className="grid gap-2 text-sm md:grid-cols-3">
-          <Detail label="Email" value={user.email} />
-          <Detail label="Role" value={user.role} />
-          <Detail label="Accommodation" value={user.accommodationName} />
-          <Detail label="Accommodation address" value={user.accommodationAddress} />
-          <Detail label="Work placement" value={user.workPlacementName} />
-          <Detail label="Work placement address" value={user.workPlacementAddress} />
-          <Detail label="Working hours" value={user.workingHours} />
-          <Detail label="Assigned hospital" value={user.hospitalName} />
-          <Detail label="Phone" value={user.phone} />
-        </dl>
+      <div>
+        <div className="grid gap-3 md:grid-cols-[auto_1fr]">
+          {user.profilePhotoUrl ? (
+            <img className="h-16 w-16 rounded-lg border border-slate-200 object-cover" src={user.profilePhotoUrl} alt={`${user.fullName} profile photo`} />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-slate-200 bg-white text-era-navy">
+              <UserRound className="h-7 w-7" aria-hidden="true" />
+            </div>
+          )}
+          <dl className="grid gap-2 text-sm md:grid-cols-3">
+            <Detail label="Email" value={user.email} />
+            <Detail label="Role" value={user.role} />
+            <Detail label="Status" value={user.isActive ? "Active" : `Inactive${user.deactivatedReason ? ` - ${user.deactivatedReason}` : ""}`} />
+            <Detail label="Accommodation" value={user.accommodationName} />
+            <Detail label="Accommodation address" value={user.accommodationAddress} />
+            <Detail label="Work placement" value={user.workPlacementName} />
+            <Detail label="Work placement address" value={user.workPlacementAddress} />
+            <Detail label="Working hours" value={user.workingHours} />
+            <Detail label="Assigned hospital" value={user.hospitalName} />
+            <Detail label="Phone" value={user.phone} />
+          </dl>
+        </div>
+        {actions}
       </div>
     );
   }
 
   if (user.role === "teacher") {
     return (
-      <dl className="grid gap-2 text-sm md:grid-cols-3">
-        <Detail label="Email" value={user.email} />
-        <Detail label="Role" value={user.role} />
-        <Detail label="Group" value={user.groupName} />
-        <Detail label="Phone" value={user.phone} />
-      </dl>
+      <div>
+        <dl className="grid gap-2 text-sm md:grid-cols-3">
+          <Detail label="Email" value={user.email} />
+          <Detail label="Role" value={user.role} />
+          <Detail label="Status" value={user.isActive ? "Active" : `Inactive${user.deactivatedReason ? ` - ${user.deactivatedReason}` : ""}`} />
+          <Detail label="Group" value={user.groupName} />
+          <Detail label="Phone" value={user.phone} />
+        </dl>
+        {actions}
+      </div>
     );
   }
 
   return (
-    <dl className="grid gap-2 text-sm md:grid-cols-3">
-      <Detail label="Email" value={user.email} />
-      <Detail label="Role" value={user.role} />
-    </dl>
+    <div>
+      <dl className="grid gap-2 text-sm md:grid-cols-3">
+        <Detail label="Email" value={user.email} />
+        <Detail label="Role" value={user.role} />
+        <Detail label="Status" value={user.isActive ? "Active" : "Inactive"} />
+      </dl>
+      {actions}
+    </div>
   );
 }
 

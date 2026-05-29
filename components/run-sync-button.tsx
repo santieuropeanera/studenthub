@@ -12,6 +12,10 @@ type SyncResult = {
   scheduleUpdated?: number;
   scheduleDeactivated?: number;
   studentsImported: number;
+  usersCreated?: number;
+  usersUpdated?: number;
+  usersDeactivated?: number;
+  usersReactivated?: number;
   skippedRows: string[];
 };
 
@@ -35,7 +39,7 @@ export function RunSyncButton() {
 
       const result = body.result as SyncResult;
       setMessage(
-        `Sync complete: ${result.importedCatalogRows} catalog rows, ${result.studentsImported} people, schedule ${result.scheduleCreated ?? 0} created, ${result.scheduleUpdated ?? 0} updated, ${result.scheduleDeactivated ?? 0} deactivated.`
+        `Sync complete: ${result.importedCatalogRows} catalog rows, users ${result.usersCreated ?? 0} created, ${result.usersUpdated ?? 0} updated, ${result.usersReactivated ?? 0} reactivated, ${result.usersDeactivated ?? 0} deactivated, schedule ${result.scheduleCreated ?? 0} created, ${result.scheduleUpdated ?? 0} updated, ${result.scheduleDeactivated ?? 0} deactivated.`
       );
       setErrors(result.skippedRows ?? []);
     } catch (error) {

@@ -121,6 +121,20 @@ function saveEmergencyCard() {
   window.setTimeout(() => document.body.classList.remove("printing-emergency-card"), 500);
 }
 
+function InactiveAccessMessage() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-era-paper px-4 py-8">
+      <section className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-5 text-center shadow-soft sm:p-6">
+        <h1 className="text-2xl font-black text-era-navy">Access inactive</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600">Your StudentHub access is inactive. Please contact European Era.</p>
+        <a className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-era-blue px-4 py-2 text-sm font-bold text-white" href="/login">
+          Back to sign in
+        </a>
+      </section>
+    </main>
+  );
+}
+
 async function loadRecordWithMapUrl(supabase: SupabaseBrowserClient, table: string, id: string, baseColumns: string) {
   const mapsUrlResult = await supabase
     .from(table)
@@ -285,6 +299,7 @@ export default function StudentPage() {
   const router = useRouter();
   const [data, setData] = useState<StudentDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInactiveAccess, setIsInactiveAccess] = useState(false);
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [isSavingPhone, setIsSavingPhone] = useState(false);
@@ -331,7 +346,7 @@ export default function StudentPage() {
 
       const { data: profileRows, error: profileError } = await supabase
         .from("profiles")
-        .select("id, full_name, email, phone, role, school_id, group_id, onboarding_completed")
+        .select("id, full_name, email, phone, role, school_id, group_id, onboarding_completed, is_active")
         .ilike("email", normalizedEmail)
         .eq("role", "student")
         .limit(1);
@@ -346,6 +361,13 @@ export default function StudentPage() {
 
       if (!profile) {
         setMessage("No student profile found for this account yet.");
+        return;
+      }
+
+      if (profile.is_active === false) {
+        await supabase.auth.signOut();
+        setIsInactiveAccess(true);
+        setMessage("Your StudentHub access is inactive. Please contact European Era.");
         return;
       }
 
@@ -653,6 +675,10 @@ export default function StudentPage() {
     window.setTimeout(() => {
       document.getElementById("emergency")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
+  }
+
+  if (isInactiveAccess) {
+    return <InactiveAccessMessage />;
   }
 
   if (isLoading) {
