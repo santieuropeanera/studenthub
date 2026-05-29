@@ -8,6 +8,9 @@ type SyncResult = {
   importedRows: number;
   importedCatalogRows: number;
   scheduleRowsImported?: number;
+  scheduleCreated?: number;
+  scheduleUpdated?: number;
+  scheduleDeactivated?: number;
   studentsImported: number;
   skippedRows: string[];
 };
@@ -32,7 +35,7 @@ export function RunSyncButton() {
 
       const result = body.result as SyncResult;
       setMessage(
-        `Sync complete: ${result.importedCatalogRows} catalog rows, ${result.studentsImported} people, ${result.scheduleRowsImported ?? 0} schedule items imported.`
+        `Sync complete: ${result.importedCatalogRows} catalog rows, ${result.studentsImported} people, schedule ${result.scheduleCreated ?? 0} created, ${result.scheduleUpdated ?? 0} updated, ${result.scheduleDeactivated ?? 0} deactivated.`
       );
       setErrors(result.skippedRows ?? []);
     } catch (error) {

@@ -44,7 +44,7 @@ export function AdminActiveGroups() {
           supabase.from("profiles").select("group_name"),
           supabase.from("student_profiles").select("group_name"),
           supabase.from("teacher_profiles").select("group_name"),
-          supabase.from("schedule_items").select("group_name")
+          supabase.from("schedule_items").select("group_name").eq("is_active", true)
         ]);
 
         if (profilesError) throw profilesError;

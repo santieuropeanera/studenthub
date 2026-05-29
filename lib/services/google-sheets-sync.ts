@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { google } from "googleapis";
 import { z } from "zod";
 import { buildMapsSearchUrl } from "@/lib/config";
@@ -161,7 +162,10 @@ export async function syncGoogleSheetsData() {
     return {
       importedRows: studentsAndTeachers.length,
       importedCatalogRows,
-      scheduleRowsImported: scheduleResult.imported,
+      scheduleRowsImported: scheduleResult.created + scheduleResult.updated,
+      scheduleCreated: scheduleResult.created,
+      scheduleUpdated: scheduleResult.updated,
+      scheduleDeactivated: scheduleResult.deactivated,
       studentsImported: peopleResult.imported,
       skippedRows: peopleResult.errors,
       catalogTabs
@@ -182,26 +186,31 @@ export async function syncGoogleSheetsData() {
 }
 
 async function upsertScheduleItems(supabase: ReturnType<typeof createSupabaseAdminClient>, rows: ScheduleRow[]) {
-  console.log(`[Google Sheets Sync] Upserting ${rows.length} schedule rows`);
+  console.log(`[Google Sheets Sync] Mirroring ${rows.length} schedule rows`);
 
-  let imported = 0;
+  let created = 0;
+  let updated = 0;
+  let deactivated = 0;
+  const currentKeys = new Set<string>();
 
   for (const row of rows) {
+    const externalKey = buildScheduleExternalKey(row);
+    currentKeys.add(externalKey);
+
     const payload = {
+      external_key: externalKey,
       group_name: row.group_name,
       title: row.title,
       date: row.date,
       time: row.time,
-      notes: row.notes ?? null
+      notes: row.notes ?? null,
+      is_active: true
     };
 
     const { data: existing, error: findError } = await supabase
       .from("schedule_items")
       .select("id")
-      .eq("group_name", row.group_name)
-      .eq("title", row.title)
-      .eq("date", row.date)
-      .eq("time", row.time)
+      .eq("external_key", externalKey)
       .maybeSingle();
 
     if (findError) {
@@ -216,10 +225,54 @@ async function upsertScheduleItems(supabase: ReturnType<typeof createSupabaseAdm
       throw new Error(`Could not upsert schedule item "${row.title}": ${result.error.message}`);
     }
 
-    imported += 1;
+    if (existing?.id) updated += 1;
+    else created += 1;
   }
 
-  return { imported };
+  const { data: existingRows, error: existingRowsError } = await supabase
+    .from("schedule_items")
+    .select("id, external_key, is_active")
+    .eq("is_active", true);
+
+  if (existingRowsError) {
+    throw new Error(`Could not read schedule rows for mirror cleanup: ${existingRowsError.message}`);
+  }
+
+  const missingIds = (existingRows ?? [])
+    .filter((item) => !item.external_key || !currentKeys.has(String(item.external_key)))
+    .map((item) => item.id as string);
+
+  if (missingIds.length) {
+    const { error } = await supabase
+      .from("schedule_items")
+      .update({ is_active: false })
+      .in("id", missingIds);
+
+    if (error) {
+      throw new Error(`Could not deactivate removed schedule rows: ${error.message}`);
+    }
+
+    deactivated = missingIds.length;
+  }
+
+  console.log("[Google Sheets Sync] Schedule mirror finished", { created, updated, deactivated });
+
+  return { created, updated, deactivated };
+}
+
+function buildScheduleExternalKey(row: ScheduleRow) {
+  const normalized = [row.group_name, row.title, row.date, row.time]
+    .map((value) =>
+      value
+        .normalize("NFKC")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase()
+    )
+    .join("|");
+
+  return `schedule_${createHash("sha256").update(normalized).digest("hex")}`;
 }
 
 async function upsertHospitals(supabase: ReturnType<typeof createSupabaseAdminClient>, rows: HospitalCatalogRow[]) {

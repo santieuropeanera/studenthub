@@ -445,6 +445,7 @@ export default function StudentPage() {
       const { data: loadedScheduleItems, error: scheduleError } = await supabase
         .from("schedule_items")
         .select("id, group_name, title, date, time, notes")
+        .eq("is_active", true)
         .order("date", { ascending: true })
         .order("time", { ascending: true });
       if (scheduleError) {
