@@ -8,6 +8,7 @@ export type InvitationUser = {
   email: string | null;
   role: string | null;
   group_name: string | null;
+  is_active: boolean | null;
   invite_status: string | null;
   invite_sent_at: string | null;
   auth_user_id: string | null;
@@ -27,7 +28,7 @@ export async function listInvitationUsers() {
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, full_name, email, role, group_name, invite_status, invite_sent_at, auth_user_id, last_invite_error")
+    .select("id, full_name, email, role, group_name, is_active, invite_status, invite_sent_at, auth_user_id, last_invite_error")
     .in("role", ["student", "teacher"])
     .order("full_name", { ascending: true });
 
@@ -40,7 +41,7 @@ export async function listInvitationUsers() {
 
 export async function sendInvitesToNewUsers() {
   const users = await listInvitationUsers();
-  const pendingUsers = users.filter((user) => !user.invite_sent_at && user.invite_status !== "invited");
+  const pendingUsers = users.filter((user) => user.is_active !== false && !user.invite_sent_at && user.invite_status !== "invited");
   const results: InviteResult[] = [];
 
   for (const user of pendingUsers) {
@@ -54,7 +55,7 @@ export async function resendUserInvite(profileId: string) {
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, full_name, email, role, group_name, invite_status, invite_sent_at, auth_user_id, last_invite_error")
+    .select("id, full_name, email, role, group_name, is_active, invite_status, invite_sent_at, auth_user_id, last_invite_error")
     .eq("id", profileId)
     .single();
 
@@ -75,6 +76,10 @@ async function sendStudentHubInvite(user: InvitationUser): Promise<InviteResult>
 
   if (user.role === "admin") {
     return { id: user.id, email, status: "skipped", error: "Admins are not invited from Google Sheets." };
+  }
+
+  if (user.is_active === false) {
+    return { id: user.id, email, status: "skipped", error: "Inactive users cannot be invited." };
   }
 
   if (!resend) {

@@ -11,6 +11,7 @@ type InvitationUser = {
   email: string | null;
   role: string | null;
   group_name: string | null;
+  is_active: boolean | null;
   invite_status: string | null;
   invite_sent_at: string | null;
   auth_user_id: string | null;
@@ -41,9 +42,10 @@ export function AdminUserInvitations() {
     return createClient(supabaseUrl, supabaseAnonKey);
   }, []);
 
-  const pendingUsers = users.filter((user) => !user.invite_sent_at && user.invite_status !== "invited");
-  const invitedUsers = users.filter((user) => user.invite_sent_at || user.invite_status === "invited");
-  const failedUsers = users.filter((user) => user.invite_status === "error" || user.last_invite_error);
+  const activeUsers = users.filter((user) => user.is_active !== false);
+  const pendingUsers = activeUsers.filter((user) => !user.invite_sent_at && user.invite_status !== "invited");
+  const invitedUsers = activeUsers.filter((user) => user.invite_sent_at || user.invite_status === "invited");
+  const failedUsers = activeUsers.filter((user) => user.invite_status === "error" || user.last_invite_error);
 
   async function authHeaders() {
     if (!supabase) throw new Error("Supabase is not configured yet.");
@@ -254,13 +256,14 @@ function InvitationList({
                 {user.invite_sent_at ? (
                   <p className="mt-1 text-xs text-slate-500">Invited {new Date(user.invite_sent_at).toLocaleString()}</p>
                 ) : null}
+                {user.is_active === false ? <p className="mt-1 text-xs font-semibold text-slate-600">Inactive user</p> : null}
                 {user.last_invite_error ? <p className="mt-1 text-xs font-semibold text-red-700">{user.last_invite_error}</p> : null}
               </div>
               <button
                 className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-era-blue px-3 py-2 text-sm font-bold text-era-blue hover:bg-era-paper disabled:cursor-not-allowed disabled:opacity-70 sm:w-fit"
                 type="button"
                 onClick={() => onResend(user.id)}
-                disabled={resendingId === user.id || !user.email}
+                disabled={resendingId === user.id || !user.email || user.is_active === false}
               >
                 {resendingId === user.id ? <LoadingButtonContent label="Sending..." /> : (
                   <>
