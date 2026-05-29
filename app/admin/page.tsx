@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ActivityIcon, BellRing, DatabaseZap, FileText, Home, MailPlus, School2, UsersRound } from "lucide-react";
+import { ActivityIcon, BellRing, BriefcaseBusiness, DatabaseZap, FileText, Home, MailPlus, School2, UsersRound } from "lucide-react";
 import { AdminActiveGroups } from "@/components/admin-active-groups";
+import { AdminActiveWorkPlacements } from "@/components/admin-active-work-placements";
 import { AdminReports } from "@/components/admin-reports";
 import { AdminSummaryStats } from "@/components/admin-summary-stats";
 import { AdminUserInvitations } from "@/components/admin-user-invitations";
@@ -13,6 +14,7 @@ const adminNav = [
   { href: "#users", label: "Users", icon: UsersRound },
   { href: "#invitations", label: "Invitations", icon: MailPlus },
   { href: "#groups", label: "Active Groups", icon: School2 },
+  { href: "#work-placements", label: "Work Placements", icon: BriefcaseBusiness },
   { href: "#sync", label: "Sheets Sync", icon: DatabaseZap },
   { href: "#activities", label: "Activities", icon: ActivityIcon },
   { href: "#reports", label: "Reports", icon: FileText }
@@ -23,6 +25,7 @@ const adminMobileNav = [
   { href: "#sync", label: "Sync", icon: DatabaseZap },
   { href: "#users", label: "Users", icon: UsersRound },
   { href: "#invitations", label: "Invitations", icon: MailPlus },
+  { href: "#work-placements", label: "Work Placements", icon: BriefcaseBusiness },
   { href: "/admin/activities", label: "Activities", icon: ActivityIcon },
   { href: "#reports", label: "Reports", icon: FileText },
   { href: "#notifications", label: "Notifications/Alerts", icon: BellRing }
@@ -44,6 +47,8 @@ export default function AdminPage() {
       <AdminUserInvitations />
 
       <AdminActiveGroups />
+
+      <AdminActiveWorkPlacements />
 
       <section id="sync" className="mt-5 rounded-lg border border-slate-200 bg-white p-4 shadow-soft sm:mt-6 sm:p-5">
         <h2 className="text-xl font-black text-era-navy sm:text-2xl">Google Sheets Sync</h2>
